@@ -214,11 +214,32 @@ A Vercel deve detectar o framework `Astro`. Antes do primeiro deploy, adicione a
 | `SEO_AUDIT_SECRET` | Opcional; só se você decidiu ativar SEO |
 | `PAGESPEED_API_KEY` | Opcional; só se você criou uma chave |
 
-A Vercel gera a URL do projeto automaticamente, e o template usa essa URL nas partes que precisam de endereço absoluto.
-
 Faça o deploy.
 
 Quando terminar, abra a URL pública do projeto e confirme se os posts `Publicado` aparecem no blog.
+
+## Escolher a URL do blog
+
+Depois do primeiro deploy, abra o `Overview` do projeto na Vercel.
+
+Na área `Production Deployment`, procure por `Domains`. Essa é a URL pública estável do seu blog.
+
+No seu caso, se a Vercel mostrar algo como `meu-blog-chi.vercel.app` em `Domains`, a URL do blog é:
+
+https://meu-blog-chi.vercel.app
+
+Não use a URL longa do deployment se a Vercel também mostrar uma URL mais limpa em `Domains`. A URL de `Domains` é a melhor para compartilhar e para criar o webhook.
+
+Se você quiser usar domínio próprio, configure agora em `Add Custom Domain` na Vercel, siga as instruções de DNS e espere o domínio ficar ativo. Depois use o domínio próprio nas próximas etapas.
+
+Exemplos:
+
+| Caso | URL do blog |
+| --- | --- |
+| Sem domínio próprio | `https://meu-blog-chi.vercel.app` |
+| Com domínio próprio | `https://blog.seudominio.com` |
+
+Você vai usar essa URL para criar o webhook do Notion.
 
 Agora que o projeto existe na Vercel, você consegue criar as duas variáveis que faltam para a publicação automática:
 
@@ -253,9 +274,17 @@ Agora o Notion precisa saber qual URL chamar quando a database mudar.
 
 O endpoint do webhook no seu site será a URL do seu blog com `/api/notion-webhook` no final.
 
-Exemplo:
+Se sua URL de produção for:
 
-https://meu-blog.vercel.app/api/notion-webhook
+https://meu-blog-chi.vercel.app
+
+O webhook será:
+
+https://meu-blog-chi.vercel.app/api/notion-webhook
+
+Se você configurou domínio próprio, use o domínio próprio:
+
+https://blog.seudominio.com/api/notion-webhook
 
 Na página da sua connection do Notion, abra a aba `Webhooks`.
 

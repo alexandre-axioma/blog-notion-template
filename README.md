@@ -87,10 +87,12 @@ Depois do primeiro deploy na Vercel:
 
 1. Crie um deploy hook em `Settings` -> `Git` -> `Deploy Hooks`.
 2. Salve a URL em `VERCEL_DEPLOY_HOOK_URL`.
-3. Crie uma webhook subscription no Notion apontando para `https://seu-blog.vercel.app/api/notion-webhook`.
-4. Copie o verification token dos logs da Vercel.
-5. Salve em `NOTION_WEBHOOK_VERIFICATION_TOKEN`.
-6. Faça redeploy.
+3. No `Overview` da Vercel, copie a URL em `Production Deployment` -> `Domains`.
+4. Se quiser domínio próprio, configure o domínio na Vercel antes de criar o webhook.
+5. Crie uma webhook subscription no Notion apontando para `SUA_URL_DO_BLOG/api/notion-webhook`.
+6. Copie o verification token dos logs da Vercel.
+7. Salve em `NOTION_WEBHOOK_VERIFICATION_TOKEN`.
+8. Faça redeploy.
 
 Este starter ignora `page.content_updated` para evitar deploy em todo autosave do Notion. Para publicar atualizações, altere uma propriedade relevante, como `Status`, `Slug`, `Categoria`, `Tags` ou `Data de Publicação`.
 
