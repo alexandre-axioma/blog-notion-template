@@ -1,0 +1,25 @@
+name: SEO audit
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 10 * * 1"
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Run SEO audit endpoint
+        env:
+          SEO_AUDIT_URL: ${{ secrets.SEO_AUDIT_URL }}
+          SEO_AUDIT_SECRET: ${{ secrets.SEO_AUDIT_SECRET }}
+        run: |
+          if [ -z "$SEO_AUDIT_URL" ] || [ -z "$SEO_AUDIT_SECRET" ]; then
+            echo "SEO audit secrets are missing. Skipping."
+            exit 0
+          fi
+
+          curl --fail --request POST \
+            --header "Authorization: Bearer $SEO_AUDIT_SECRET" \
+            "$SEO_AUDIT_URL"
+

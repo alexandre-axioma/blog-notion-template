@@ -170,28 +170,56 @@ Anote esses dois valores. Você vai colar na Vercel durante a criação do proje
 
 Se você não quer ativar auditoria automática de SEO agora, pule esta seção e vá direto para a Vercel.
 
-Se quiser deixar o SEO pronto desde o começo, faça duas coisas.
+O SEO audit deste template faz uma coisa específica: ele chama o PageSpeed Insights para cada post publicado e escreve a nota de SEO na propriedade `SEO Score` do Notion.
+
+Para deixar isso pronto desde o começo, faça três coisas.
 
 Primeiro, volte na sua Notion integration e ligue `Update content`, porque o SEO audit precisa escrever o valor em `SEO Score` na database.
 
-Depois, escolha um segredo para proteger a rota de auditoria. Pode ser uma frase longa, aleatória, que só você sabe. Você vai usar esse valor como:
+Depois, escolha um segredo para proteger a rota de auditoria. Você pode gerar uma senha forte no Bitwarden:
+
+https://bitwarden.com/password-generator/
+
+Use uma senha longa, com pelo menos 32 caracteres, e anote como:
 
 ```env
 SEO_AUDIT_SECRET=um_texto_secreto_forte
 ```
 
-O PageSpeed API key é opcional para baixo volume. Se quiser criar uma chave, use o Google Cloud/PageSpeed Insights e anote:
+Por fim, decida se quer usar uma chave do PageSpeed. A própria documentação do Google diz que a PageSpeed Insights API pode ser usada com ou sem API key, mas recomenda uma chave para consultas frequentes ou automáticas:
+
+https://developers.google.com/speed/docs/insights/v5/get-started
+
+Para criar a chave:
+
+1. Abra a API no Google Cloud:
+
+https://console.cloud.google.com/apis/library/pagespeedonline.googleapis.com
+
+2. Escolha ou crie um projeto.
+3. Clique em `Enable`.
+4. Abra a página de credenciais:
+
+https://console.cloud.google.com/apis/credentials
+
+5. Clique em `Create credentials`.
+6. Escolha `API key`.
+7. Copie a chave e anote como:
 
 ```env
 PAGESPEED_API_KEY=sua_chave_do_pagespeed
 ```
+
+Essa chave é opcional. Se você não criar, deixe `PAGESPEED_API_KEY` vazio e teste assim primeiro.
 
 Então, se você quiser SEO desde o primeiro deploy, já separe também:
 
 | Nome | Valor |
 | --- | --- |
 | `SEO_AUDIT_SECRET` | Um segredo forte criado por você |
-| `PAGESPEED_API_KEY` | Opcional; pode deixar vazio |
+| `PAGESPEED_API_KEY` | Opcional; chave criada no Google Cloud |
+
+Só essas variáveis deixam a rota de SEO pronta na Vercel. Para ela rodar automaticamente toda semana, ainda vamos ativar um GitHub Action depois que o site tiver uma URL pública.
 
 ## Publicar na Vercel
 
@@ -419,7 +447,9 @@ Adapte a home, a página de post e o CSS global.
 
 ## Rodar SEO audit
 
-Se você ativou o SEO opcional, a rota para rodar a auditoria é:
+Se você ativou o SEO opcional, existem dois jeitos de rodar a auditoria.
+
+O jeito manual é chamar a rota do seu site:
 
 Depois que o site estiver no ar, chame:
 
@@ -429,7 +459,27 @@ curl --request POST \
   "https://seu-projeto.vercel.app/api/seo-audit"
 ```
 
-Você também pode criar um GitHub Action agendado para chamar essa rota de tempos em tempos.
+Se funcionar, a resposta mostra quantos posts foram auditados, e a propriedade `SEO Score` deve aparecer preenchida no Notion.
+
+O jeito automático usa o GitHub Action que já vem no template em `.github/workflows/seo-audit.yml`.
+
+Para ativar:
+
+1. Abra o repositório do seu blog no GitHub.
+2. Vá em `Settings`.
+3. Vá em `Secrets and variables`.
+4. Clique em `Actions`.
+5. Clique em `New repository secret`.
+6. Crie o secret `SEO_AUDIT_SECRET` com o mesmo valor que você colocou na Vercel.
+7. Crie o secret `SEO_AUDIT_URL` com a URL completa da rota:
+
+```txt
+https://seu-projeto.vercel.app/api/seo-audit
+```
+
+Depois vá na aba `Actions`, abra o workflow `SEO audit` e clique em `Run workflow` para testar.
+
+Depois disso, o GitHub também roda esse workflow automaticamente uma vez por semana.
 
 ## Problemas comuns
 

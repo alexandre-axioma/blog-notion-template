@@ -1,6 +1,6 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { Client } from "@notionhq/client";
-import { getSiteUrl } from "../src/lib/site-url";
+import { getSiteUrl } from "../src/lib/site-url.js";
 
 const siteUrl = getSiteUrl();
 const publishedStatuses = new Set(["published", "publicado", "publish"]);

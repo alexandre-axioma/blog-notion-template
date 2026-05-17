@@ -53,6 +53,21 @@ SEO_AUDIT_SECRET=um_texto_secreto_forte
 PAGESPEED_API_KEY=sua_chave_do_pagespeed_ou_vazio
 ```
 
+`SEO_AUDIT_SECRET` protege a rota `/api/seo-audit`. Você pode gerar um segredo forte em:
+
+https://bitwarden.com/password-generator/
+
+`PAGESPEED_API_KEY` é opcional para baixo volume. Se quiser criar uma chave, use:
+
+https://console.cloud.google.com/apis/library/pagespeedonline.googleapis.com
+
+Para rodar o SEO audit automaticamente toda semana, o template já inclui `.github/workflows/seo-audit.yml`. Depois do deploy, crie dois repository secrets no GitHub Actions:
+
+```env
+SEO_AUDIT_SECRET=o_mesmo_valor_da_vercel
+SEO_AUDIT_URL=https://seu-blog.vercel.app/api/seo-audit
+```
+
 Estas duas variáveis só existem depois que o projeto já foi criado na Vercel:
 
 ```env

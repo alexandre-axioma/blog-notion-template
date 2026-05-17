@@ -28,8 +28,8 @@ Use este checklist para gravar o passo a passo do zero até o blog automático.
 - Usar `Edit access` para liberar `Blog Notion Template` e, se aparecer, `Blog Content Management`.
 - Copiar `NOTION_BLOG_DATABASE_ID` da database `Blog Content Management`, não da página `Blog Notion Template`.
 - Opcional: ligar `Update content` na integration para SEO audit.
-- Opcional: criar/anotar `SEO_AUDIT_SECRET`.
-- Opcional: criar/anotar `PAGESPEED_API_KEY`.
+- Opcional: gerar/anotar `SEO_AUDIT_SECRET` em `https://bitwarden.com/password-generator/`.
+- Opcional: criar/anotar `PAGESPEED_API_KEY` em `https://console.cloud.google.com/apis/library/pagespeedonline.googleapis.com`.
 - Importar repo na Vercel.
 - Configurar env vars já disponíveis.
 - Fazer o primeiro deploy.
@@ -45,6 +45,8 @@ Use este checklist para gravar o passo a passo do zero até o blog automático.
 - Fazer redeploy.
 - Voltar no Notion, clicar `Verify`, colar o token e confirmar.
 - Publicar um post de teste pelo Notion.
+- Opcional: para SEO automático, criar no GitHub Actions os repository secrets `SEO_AUDIT_SECRET` e `SEO_AUDIT_URL`.
+- Opcional: rodar o workflow `SEO audit` manualmente uma vez.
 
 ## Extra
 
