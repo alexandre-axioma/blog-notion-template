@@ -1,0 +1,35 @@
+---
+import BaseLayout from "@/layouts/BaseLayout.astro";
+
+export const prerender = true;
+---
+
+<BaseLayout title="404 · Seu Blog" description="Página não encontrada.">
+  <main class="shell">
+    <nav class="masthead" aria-label="Voltar pro blog">
+      <a class="masthead__home" href="/">
+        <span class="masthead__arrow" aria-hidden="true">←</span>
+        <img class="masthead__avatar" src="/static/images/avatar.svg" alt="" width="28" height="28" />
+        <strong class="masthead__brand">
+          seu <span class="masthead__mark">blog<svg class="masthead__underline" viewBox="0 0 80 10" fill="none" aria-hidden="true">
+            <path d="M2 6 Q 14 2, 26 5 T 50 5 T 74 4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" fill="none"/>
+          </svg></span>
+        </strong>
+      </a>
+    </nav>
+
+    <div class="not-found">
+      <svg class="ornament" viewBox="0 0 96 18" fill="none" aria-hidden="true">
+        <path d="M2 9 Q 18 2, 34 9 T 66 9 T 94 9" stroke="currentColor" stroke-width="1.1" stroke-linecap="round" />
+        <circle cx="48" cy="9" r="2.4" fill="currentColor" />
+      </svg>
+
+      <h1>Essa página foi pro <em>mato.</em></h1>
+      <p>Mas o resto do blog ainda está aqui.</p>
+
+      <a class="not-found__back" href="/">
+        <span class="arrow">&larr;</span> Voltar pro início
+      </a>
+    </div>
+  </main>
+</BaseLayout>

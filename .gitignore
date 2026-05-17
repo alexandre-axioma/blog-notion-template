@@ -1,0 +1,23 @@
+# macOS
+.DS_Store
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# Dependencies and build output
+node_modules/
+.astro/
+dist/
+
+# Vercel
+.vercel/
+
+# Build-time caches
+.notion-cache/
+public/static/notion/
+
+# Logs
+*.log
+npm-debug.log*

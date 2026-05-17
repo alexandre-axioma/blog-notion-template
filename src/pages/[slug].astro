@@ -1,0 +1,220 @@
+---
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import { getAllPostPaths, firstParagraphLength } from "@/lib/notion";
+
+export const prerender = true;
+
+export async function getStaticPaths() {
+  return getAllPostPaths();
+}
+
+const { post } = Astro.props;
+
+/* Data manuscrita pro header do artigo: "9 de maio, 2026".
+   Dia sem zero à esquerda, mês por extenso, vírgula antes do ano. */
+const MONTHS_FULL = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"];
+function formatDateCaveat(date: string) {
+  const parsed = new Date(`${date.slice(0, 10)}T12:00:00`);
+  if (Number.isNaN(parsed.getTime())) return "";
+  return `${parsed.getDate()} de ${MONTHS_FULL[parsed.getMonth()]}, ${parsed.getFullYear()}`;
+}
+
+/* Data curta pra "revisado em X": "13 mai". Inline na meta, sem ano. */
+const MONTHS_SHORT = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"];
+function formatDateShort(date: string) {
+  const parsed = new Date(`${date.slice(0, 10)}T12:00:00`);
+  if (Number.isNaN(parsed.getTime())) return "";
+  return `${parsed.getDate()} ${MONTHS_SHORT[parsed.getMonth()]}`;
+}
+
+function readingMinutes(words: number | null): number | null {
+  if (!words) return null;
+  return Math.max(1, Math.round(words / 220));
+}
+
+function showsRevision(publishedAt: string | null, updatedAt: string | null): boolean {
+  if (!publishedAt || !updatedAt) return false;
+  const pub = new Date(publishedAt).getTime();
+  const upd = new Date(updatedAt).getTime();
+  return upd - pub > 24 * 60 * 60 * 1000;
+}
+
+const minutes = readingMinutes(post.wordCount);
+const showRevision = showsRevision(post.publishedAt, post.updatedAt);
+/* Adaptive drop cap — always renders, scales with the opening's body:
+     ≥200 chars → 3-line dramatic drop cap (long opening)
+     50-199 chars → 2-line drop cap (typical opening)
+     <50 chars → inline lead-in (just a stylized first letter; a
+       3-line cap floating next to two characters looks ridiculous) */
+const paragraphLen = firstParagraphLength(post.html);
+const proseClass =
+  paragraphLen >= 200
+    ? "prose prose--drop-cap-3"
+    : paragraphLen >= 50
+    ? "prose prose--drop-cap-2"
+    : "prose prose--drop-cap-small";
+const proseHtml = post.html || "<p><em>Esse post ainda não tem corpo no Notion.</em></p>";
+const showToc = (post.toc?.length ?? 0) >= 2;
+---
+
+<BaseLayout
+  title={`${post.title} · Seu Blog`}
+  description={post.summary || post.title}
+  ogImage={post.coverImage ?? undefined}
+>
+  <main class="article-shell">
+    <nav class="masthead" aria-label="Voltar pro blog">
+      <a class="masthead__home" href="/">
+        <span class="masthead__arrow" aria-hidden="true">←</span>
+        <img class="masthead__avatar" src="/static/images/avatar.svg" alt="" width="28" height="28" />
+        <strong class="masthead__brand">
+          seu <span class="masthead__mark">blog<svg class="masthead__underline" viewBox="0 0 80 10" fill="none" aria-hidden="true">
+            <path d="M2 6 Q 14 2, 26 5 T 50 5 T 74 4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" fill="none"/>
+          </svg></span>
+        </strong>
+      </a>
+    </nav>
+
+    <article class="article">
+      {post.coverImage && (
+        <figure class="article-cover">
+          <img src={post.coverImage} alt="" loading="eager" />
+        </figure>
+      )}
+
+      <header class="article-header">
+        {post.category && <p class="eyebrow">{post.category}</p>}
+        <h1>{post.title}</h1>
+        {post.summary && <p class="article-header__summary">{post.summary}</p>}
+
+        <p class="article-header__line">
+          {post.publishedAt && (
+            <time class="article-header__date" datetime={post.publishedAt}>
+              {formatDateCaveat(post.publishedAt)}
+            </time>
+          )}
+          {minutes && (
+            <>
+              <span class="article-header__sep" aria-hidden="true">·</span>
+              <span class="article-header__meta">{minutes} min de leitura</span>
+            </>
+          )}
+          {showRevision && post.updatedAt && (
+            <>
+              <span class="article-header__sep" aria-hidden="true">·</span>
+              <span class="article-header__meta">
+                revisado em <time datetime={post.updatedAt}>{formatDateShort(post.updatedAt)}</time>
+              </span>
+            </>
+          )}
+        </p>
+
+        {
+          post.tags.length > 0 && (
+            <ul class="tags" aria-label="Tags">
+              {post.tags.map((tag: string) => <li>{tag}</li>)}
+            </ul>
+          )
+        }
+      </header>
+
+      <div class="article__divider" aria-hidden="true">
+        <svg class="ornament article__divider-mark" viewBox="0 0 96 18" fill="none">
+          <path d="M2 9 Q 18 2, 34 9 T 66 9 T 94 9" stroke="currentColor" stroke-width="1.1" stroke-linecap="round" />
+          <circle cx="48" cy="5" r="2" fill="currentColor" />
+        </svg>
+      </div>
+
+      <div class={proseClass} set:html={proseHtml} />
+
+      <footer class="author-block">
+        <img
+          class="author-block__avatar"
+          src="/static/images/avatar.svg"
+          alt="Seu Nome"
+          width="56"
+          height="56"
+          loading="lazy"
+          decoding="async"
+        />
+        <div class="author-block__text">
+          <span class="author-block__name">Seu Nome</span>
+          <span class="author-block__bio">Escreva aqui uma bio curta do autor.</span>
+          <a class="author-block__link" href="/">seu-site.com &rarr;</a>
+        </div>
+      </footer>
+    </article>
+
+    <nav class="article-footer-nav" aria-label="Navegação inferior">
+      <a class="article-footer-nav__back" href="/">
+        <span class="arrow">&larr;</span> Voltar pro blog
+      </a>
+    </nav>
+  </main>
+
+  {showToc && (
+    <aside class="toc" aria-label="Índice deste post">
+      <p class="toc__label">Nesse post</p>
+      <ol class="toc__list">
+        {post.toc.map((entry: any) => (
+          <li class={`toc__item toc__item--lvl${entry.level}`}>
+            <a href={`#${entry.id}`}>{entry.text}</a>
+          </li>
+        ))}
+      </ol>
+    </aside>
+  )}
+</BaseLayout>
+
+<script is:inline>
+  // TOC scrollspy — re-runs on each page navigation (view transitions)
+  function setupToc() {
+    const tocLinks = document.querySelectorAll(".toc__item a");
+    if (!tocLinks.length) return;
+
+    const headings = Array.from(tocLinks).map((a) => {
+      const id = a.getAttribute("href")?.slice(1);
+      return id ? document.getElementById(id) : null;
+    }).filter(Boolean);
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          const link = document.querySelector(`.toc__item a[href="#${entry.target.id}"]`);
+          if (!link) return;
+          if (entry.isIntersecting) {
+            tocLinks.forEach((l) => l.parentElement?.classList.remove("toc__item--active"));
+            link.parentElement?.classList.add("toc__item--active");
+          }
+        });
+      },
+      { rootMargin: "-20% 0px -70% 0px" }
+    );
+
+    headings.forEach((h) => h && observer.observe(h));
+  }
+
+  document.addEventListener("DOMContentLoaded", setupToc);
+  document.addEventListener("astro:page-load", setupToc);
+
+  // Code block copy button — event delegation (survives navigations)
+  document.addEventListener("click", async (e) => {
+    const btn = e.target && e.target.closest && e.target.closest(".code-block__copy");
+    if (!btn) return;
+    const pre = btn.closest(".code-block")?.querySelector("pre");
+    if (!pre) return;
+    try {
+      await navigator.clipboard.writeText(pre.textContent || "");
+      btn.setAttribute("data-copied", "true");
+      const label = btn.querySelector(".code-block__copy-label");
+      const original = label ? label.textContent : "";
+      if (label) label.textContent = "Copiado";
+      setTimeout(() => {
+        btn.removeAttribute("data-copied");
+        if (label) label.textContent = original || "Copiar";
+      }, 1800);
+    } catch (err) {
+      console.warn("Copy failed", err);
+    }
+  });
+</script>

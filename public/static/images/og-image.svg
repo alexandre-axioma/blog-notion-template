@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" role="img" aria-label="Blog placeholder">
+  <rect width="1200" height="630" fill="#f4ede0"/>
+  <path d="M104 500c120-106 236-141 348-105s218 15 318-63 209-93 326-46" fill="none" stroke="#b46b4a" stroke-width="8" stroke-linecap="round"/>
+  <text x="104" y="222" fill="#201a16" font-family="Georgia, serif" font-size="88">Seu Blog</text>
+  <text x="108" y="296" fill="#5d5148" font-family="Georgia, serif" font-size="34">Notion + Astro + Vercel</text>
+</svg>

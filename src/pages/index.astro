@@ -1,0 +1,1551 @@
+---
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import { getPublishedPosts, categoriesFrom, slugify } from "@/lib/notion";
+import type { BlogPost } from "@/lib/notion";
+
+export const prerender = true;
+
+/* ============================================================
+   ALTERNATIVA — IMAGEM RETRATO + EXCERPT EM 2 COLUNAS
+
+   A imagem agora ocupa uma coluna fixa à esquerda (~360px) e
+   estende-se em altura cobrindo tanto o bloco do hero (título,
+   dek, notas) quanto o excerpt do corpo. À direita, o conteúdo
+   se divide em duas linhas: hero text em cima, excerpt em duas
+   colunas em baixo.
+
+   Estrutura: CSS Grid com grid-template-areas
+   ============================================================ */
+
+const DEMO_POSTS: BlogPost[] = [
+  {
+    id: "demo-arquitetura",
+    title: "A arquitetura do tempo livre",
+    slug: "arquitetura-do-tempo-livre",
+    status: "Published",
+    summary: "O tempo que sobra também tem planta baixa. Janelas, corredores, porta dos fundos da semana.",
+    category: "Ensaios",
+    tags: ["tempo", "rotina"],
+    publishedAt: "2026-05-11",
+    updatedAt: null,
+    link: null,
+    wordCount: 1300,
+    seoScore: null,
+    heroImage: null,
+    thumbImage: null,
+    coverImage: null,
+    html:
+      "<p>O tempo livre tem planta baixa. Fui descobrir isso aos trinta, quando percebi que mesmo as horas vagas obedecem a alguma geometria invisível, calada, mas presente.</p>" +
+      "<p>Algumas têm pé-direito alto, lugar pra pensar devagar. Outras são corredores estreitos, só servem pra atravessar. Sábado de manhã é a sala maior, onde cabem projetos que não pediram permissão pra existir.</p>" +
+      "<p>Comecei a tratar o tempo como espaço, e algo mudou. Em vez de me perguntar o que fazer com as horas, comecei a perguntar onde elas ficam. A planta baixa não é fixa, mas existe.</p>",
+    toc: [],
+  },
+  {
+    id: "demo-mochileiro",
+    title: "O Guia do Mochileiro das Galáxias",
+    slug: "guia-do-mochileiro-das-galaxias",
+    status: "Published",
+    summary: "Notas marginais de uma releitura. Humor cósmico e a coragem de não levar nada a sério demais.",
+    category: "Livros",
+    tags: ["adams"],
+    publishedAt: "2025-05-15",
+    updatedAt: null,
+    link: null,
+    wordCount: 2400,
+    seoScore: null,
+    heroImage: null,
+    thumbImage: null,
+    coverImage: null,
+    html: "",
+    toc: [],
+  },
+  {
+    id: "demo-cartas",
+    title: "Cartas para um futuro engenheiro",
+    slug: "cartas-para-um-futuro-engenheiro",
+    status: "Published",
+    summary: "Coisas que eu queria ter ouvido antes de começar. Escritas como quem escreve para si mesmo, dez anos atrás.",
+    category: "Cartas",
+    tags: ["carreira", "carta"],
+    publishedAt: "2025-11-11",
+    updatedAt: null,
+    link: null,
+    wordCount: 1980,
+    seoScore: null,
+    heroImage: null,
+    thumbImage: null,
+    coverImage: null,
+    html: "",
+    toc: [],
+  },
+  {
+    id: "demo-lento",
+    title: "Notas sobre o lento",
+    slug: "notas-sobre-o-lento",
+    status: "Published",
+    summary: "Inventário pessoal de coisas que insistem em demorar, e por que eu quero defendê-las.",
+    category: "Pensamentos",
+    tags: ["atenção"],
+    publishedAt: "2026-04-04",
+    updatedAt: null,
+    link: null,
+    wordCount: 880,
+    seoScore: null,
+    heroImage: null,
+    thumbImage: null,
+    coverImage: null,
+    html: "",
+    toc: [],
+  },
+  {
+    id: "demo-sistemas",
+    title: "Pequenos sistemas, grandes hábitos",
+    slug: "pequenos-sistemas-grandes-habitos",
+    status: "Published",
+    summary: "Três rituais minúsculos que carregam o resto do meu dia.",
+    category: "Tutorial",
+    tags: ["hábitos"],
+    publishedAt: "2026-01-22",
+    updatedAt: null,
+    link: null,
+    wordCount: 1540,
+    seoScore: null,
+    heroImage: null,
+    thumbImage: null,
+    coverImage: null,
+    html: "",
+    toc: [],
+  },
+];
+
+const realPosts = await getPublishedPosts();
+const posts = realPosts.length > 0
+  ? realPosts
+  : (import.meta.env.DEV ? DEMO_POSTS : []);
+const [feature, ...rest] = posts;
+
+const categoryNames = categoriesFrom(posts);
+const categories = categoryNames.map((name) => ({
+  name,
+  slug: slugify(name),
+  count: posts.filter((p) => slugify(p.category) === slugify(name)).length,
+}));
+
+const months = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"];
+
+function formatDate(date: string | null): string {
+  if (!date) return "";
+  const parsed = new Date(`${date.slice(0, 10)}T12:00:00`);
+  if (Number.isNaN(parsed.getTime())) return "";
+  const day = String(parsed.getDate()).padStart(2, "0");
+  return `${day} ${months[parsed.getMonth()]} ${parsed.getFullYear()}`;
+}
+
+function readingMinutes(words: number | null): number {
+  if (!words) return 1;
+  return Math.max(1, Math.round(words / 220));
+}
+
+/** Picsum como fallback quando o post não tem Hero/Thumb setados no Notion. */
+function picsumImage(slug: string, big = false): string {
+  return `https://picsum.photos/seed/${slug}/${big ? "1200/1600" : "900/700"}`;
+}
+
+function heroImageFor(post: { slug: string; heroImage?: string | null }): string {
+  return post.heroImage ?? picsumImage(post.slug, true);
+}
+
+function thumbImageFor(post: { slug: string; thumbImage?: string | null }): string {
+  return post.thumbImage ?? picsumImage(post.slug, false);
+}
+
+function extractBodyText(html: string | null | undefined, maxWords = 90): string[] {
+  if (!html) return [];
+
+  const text = html
+    .replace(/<pre[\s\S]*?<\/pre>/gi, " ")
+    .replace(/<code[\s\S]*?<\/code>/gi, " ")
+    .replace(/<h1\b[\s\S]*?<\/h1>/gi, " ")
+    .replace(/<h2\b[\s\S]*?<\/h2>/gi, " ")
+    .replace(/<\/(p|li|h[3-6]|blockquote)>/gi, "\n\n")
+    .replace(/<br\s*\/?>/gi, " ")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/&nbsp;/g, " ")
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&hellip;/g, "…");
+
+  const paras = text
+    .split(/\n\n+/)
+    .map((p) => p.trim().replace(/\s+/g, " "))
+    .filter((p) => p.length > 0);
+
+  const result: string[] = [];
+  let usedWords = 0;
+  for (const para of paras) {
+    const words = para.split(/\s+/);
+    if (usedWords + words.length <= maxWords) {
+      result.push(para);
+      usedWords += words.length;
+    } else {
+      const remaining = maxWords - usedWords;
+      if (remaining > 8) {
+        result.push(words.slice(0, remaining).join(" "));
+      }
+      break;
+    }
+  }
+  return result;
+}
+
+const featureBody = feature ? extractBodyText(feature.html, 60) : [];
+const featureMinutes = feature ? readingMinutes(feature.wordCount) : 0;
+
+/* Pré-computa os dados de "candidato a featured" pra cada filtro.
+   "all" usa o mais recente geral; cada categoria usa o mais recente dela.
+   Embutido como JSON num script — o JS lê pra trocar a feature dinamicamente
+   quando o usuário muda de filtro. */
+type FeatureSnapshot = {
+  slug: string;
+  title: string;
+  summary: string;
+  category: string;
+  dateFormatted: string;
+  readingMin: number;
+  imageBig: string;
+  body: string[];
+  /** True só se este é o post mais recente do blog inteiro.
+     Usado pra alternar "acabou de sair" (mais recente absoluto)
+     vs "em destaque" (mais recente do filtro, mas não do blog). */
+  isLatest: boolean;
+};
+
+/* Slug do post mais recente do blog. Como getPublishedPosts() retorna
+   ordenado por publishedAt desc, é simplesmente posts[0]. */
+const latestSlug = posts[0]?.slug ?? null;
+
+function buildSnapshot(p: BlogPost): FeatureSnapshot {
+  return {
+    slug: p.slug,
+    title: p.title,
+    summary: p.summary,
+    category: p.category,
+    dateFormatted: formatDate(p.publishedAt),
+    readingMin: readingMinutes(p.wordCount),
+    imageBig: heroImageFor(p),
+    body: extractBodyText(p.html, 60),
+    isLatest: p.slug === latestSlug,
+  };
+}
+
+const featuresByView: Record<string, FeatureSnapshot | null> = {
+  all: feature ? buildSnapshot(feature) : null,
+};
+for (const c of categories) {
+  const first = posts.find((p) => slugify(p.category) === c.slug) ?? null;
+  featuresByView[c.slug] = first ? buildSnapshot(first) : null;
+}
+---
+
+<BaseLayout title="Blog · Seu Nome" hideFooter>
+
+  <!-- ================== TOPBAR ================== -->
+  <header class="topbar shell">
+    <a href="/" class="topbar__me">
+      <img src="/static/images/avatar.svg" alt="" width="44" height="44" />
+      <span class="topbar__me-text">
+        <strong>
+          seu <span class="topbar__mark">blog<svg class="topbar__underline" viewBox="0 0 80 10" fill="none" aria-hidden="true">
+            <path d="M2 6 Q 14 2, 26 5 T 50 5 T 74 4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" fill="none"/>
+          </svg></span>
+        </strong>
+        <em>blog</em>
+      </span>
+    </a>
+
+    <nav class="topbar__links" aria-label="Outros lugares">
+      <a href="/about">sobre</a>
+      <a href="https://www.youtube.com/@seucanal" target="_blank" rel="noopener noreferrer">
+        yt
+        <svg class="topbar__play" width="15" height="11" viewBox="0 0 15 11" fill="currentColor" fill-rule="evenodd" aria-hidden="true">
+          <path d="M2.4 0 H 12.6 A 2.4 2.4 0 0 1 15 2.4 V 8.6 A 2.4 2.4 0 0 1 12.6 11 H 2.4 A 2.4 2.4 0 0 1 0 8.6 V 2.4 A 2.4 2.4 0 0 1 2.4 0 Z M 5.8 3 L 10.5 5.5 L 5.8 8 Z"/>
+        </svg>
+      </a>
+    </nav>
+  </header>
+
+  {feature ? (
+    <>
+      <!-- ================== CONTROLS (filtros + busca) ================== -->
+      <section class="controls shell">
+        <nav class="controls__filters" role="tablist" aria-label="Filtrar por categoria">
+          <button class="filter is-active" type="button" data-filter="all">
+            tudo<sup class="filter__count">{posts.length}</sup>
+          </button>
+          {categories.map((c) => (
+            <>
+              <span class="filter-sep" aria-hidden="true">·</span>
+              <button class="filter" type="button" data-filter={c.slug}>
+                {c.name.toLowerCase()}<sup class="filter__count">{c.count}</sup>
+              </button>
+            </>
+          ))}
+        </nav>
+
+        <div class="controls__search">
+          <button class="controls__search-trigger" type="button" aria-expanded="false" aria-controls="search-panel">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
+              <circle cx="10.5" cy="10.5" r="6.5"/>
+              <path d="M20 20l-4.5-4.5"/>
+            </svg>
+            <span>buscar</span>
+          </button>
+          <div class="controls__search-panel" id="search-panel">
+            <div id="search" class="controls__search-inner">
+              <span class="controls__search-icon" aria-hidden="true">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+                  <circle cx="10.5" cy="10.5" r="6.5"/>
+                  <path d="M20 20l-4.5-4.5"/>
+                </svg>
+              </span>
+              <input class="controls__search-fallback" type="search" placeholder="buscar nas notas…" aria-label="Buscar pelos posts" />
+            </div>
+            <button class="controls__search-close" type="button" aria-label="Fechar busca">×</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================== FEATURE (image + hero + excerpt) ================== -->
+      <section class="feature shell" data-slug={feature.slug}>
+        <div class="feature__grid">
+          <a class="feature__media stagger" data-stagger="0" href={`/${feature.slug}/`} aria-label={feature.title}>
+            <img src={heroImageFor(feature)} alt="" loading="eager" />
+          </a>
+
+          <div class="feature__hero">
+            <p class="hero__meta stagger" data-stagger="1">
+              <span class="hero__cat">{feature.category}</span>
+              <span class="hero__sep" aria-hidden="true">·</span>
+              <span class="hero__date">{formatDate(feature.publishedAt)}</span>
+              <span class="hero__sep" aria-hidden="true">·</span>
+              <span class="hero__reading">{featureMinutes} min de leitura</span>
+            </p>
+
+            <h2 class="hero__title stagger" data-stagger="2">
+              <a href={`/${feature.slug}/`}>{feature.title}</a>
+            </h2>
+
+            <p class="hero__dek stagger" data-stagger="3">{feature.summary}</p>
+
+            <a class="hero__note draw-on" href={`/${feature.slug}/`} aria-hidden="true" tabindex="-1">
+              <svg viewBox="0 0 80 24" fill="none" class="hero__note-arrow">
+                <path d="M3 16 Q 18 4, 36 12 T 70 8" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" fill="none"/>
+                <path d="M65 4 L 72 8 L 66 13" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+              </svg>
+              <span>acabou de sair</span>
+            </a>
+
+            <a class="hero__taste draw-on" href={`/${feature.slug}/`} aria-hidden="true" tabindex="-1">
+              <svg viewBox="0 0 32 24" fill="none" class="hero__taste-arrow">
+                <path d="M3 4 Q 14 4, 19 18" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" fill="none"/>
+                <path d="M14 13 L 19 19 L 25 14" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+              </svg>
+              <span>um gostinho</span>
+            </a>
+          </div>
+
+          {featureBody.length > 0 && (
+            <a class="feature__excerpt stagger" data-stagger="4" href={`/${feature.slug}/`} aria-label={`Ler ${feature.title}`}>
+              {featureBody.map((para, i) => (
+                <p class={i === 0 ? "excerpt__para excerpt__para--drop" : "excerpt__para"}>{para}</p>
+              ))}
+            </a>
+          )}
+        </div>
+      </section>
+
+      {rest.length > 0 && (
+        <section class="garden shell" aria-label="Outras notas">
+          <header class="garden__head">
+            <h2>também por aqui</h2>
+          </header>
+
+          <div class="notes">
+            {rest.map((p, i) => {
+              const minutes = readingMinutes(p.wordCount);
+              /* Começa em --right pra contrastar com o hero (imagem à
+                 esquerda). Sem isso, a primeira note ecoa o hero e o
+                 zig-zag perde o gesto. */
+              const side = i % 2 === 0 ? "note--right" : "note--left";
+              return (
+                <article class={`note ${side}`} data-category={slugify(p.category) || ""} data-slug={p.slug}>
+                  <a href={`/${p.slug}/`} class="note__link">
+                    <div class="note__media">
+                      <img src={thumbImageFor(p)} alt="" loading="lazy" />
+                    </div>
+
+                    <div class="note__text">
+                      <p class="note__meta">
+                        {p.category && <span class="note__cat">{p.category}</span>}
+                        {p.publishedAt && (
+                          <>
+                            <span class="note__sep" aria-hidden="true">·</span>
+                            <span>{formatDate(p.publishedAt)}</span>
+                          </>
+                        )}
+                        {minutes > 0 && (
+                          <>
+                            <span class="note__sep" aria-hidden="true">·</span>
+                            <span>{minutes} min</span>
+                          </>
+                        )}
+                      </p>
+                      <h3 class="note__title">{p.title}</h3>
+                      {p.summary && <p class="note__dek">{p.summary}</p>}
+                    </div>
+                  </a>
+                </article>
+              );
+            })}
+          </div>
+
+          <div class="filter-empty" hidden>
+            <p>nada nessa categoria ainda.</p>
+          </div>
+        </section>
+      )}
+
+      <footer class="signoff shell">
+        <p>
+          todo mundo precisa construir as próprias coisas.
+          <br/>
+          <span class="signoff__hand">seu nome, escrevendo no caminho</span>
+        </p>
+      </footer>
+    </>
+  ) : (
+    <section class="empty shell">
+      <svg class="empty__ornament" viewBox="0 0 96 18" fill="none" aria-hidden="true">
+        <path d="M2 9 Q 18 2, 34 9 T 66 9 T 94 9" stroke="currentColor" stroke-width="1.1" stroke-linecap="round" />
+        <circle cx="48" cy="9" r="2.4" fill="currentColor" />
+      </svg>
+      <h2 class="empty__title">esse blog ainda está <em>em branco.</em></h2>
+      <p>volte daqui a pouco.</p>
+    </section>
+  )}
+
+</BaseLayout>
+
+<link rel="stylesheet" href="/pagefind/pagefind-ui.css" />
+<script src="/pagefind/pagefind-ui.js" is:inline defer></script>
+
+<script id="features-data" type="application/json" is:inline set:html={JSON.stringify(featuresByView)}></script>
+<script is:inline>
+  function setupHome() {
+    const filters = document.querySelectorAll(".filter");
+    const notes = document.querySelectorAll(".note");
+    const filterEmpty = document.querySelector(".filter-empty");
+    const feature = document.querySelector(".feature");
+    const garden = document.querySelector(".garden");
+
+    const prefersReducedMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    /* === Efeito premium 1: Stagger no primeiro paint ===
+       Elementos com .stagger começam invisíveis (CSS). Aqui adicionamos
+       .is-in com delay incremental baseado em data-stagger. */
+    function startStagger() {
+      const staggers = document.querySelectorAll(".stagger");
+      if (prefersReducedMotion) {
+        staggers.forEach((el) => el.classList.add("is-in"));
+        return;
+      }
+      staggers.forEach((el) => {
+        const idx = parseInt(el.dataset.stagger || "0", 10);
+        /* 60ms inicial deixa o browser pintar o estado base antes da
+           transição começar. 110ms entre cada dá sensação coreografada
+           sem ser lento. */
+        setTimeout(() => el.classList.add("is-in"), 60 + idx * 110);
+      });
+    }
+
+    /* === Efeito premium 2: Marginalia se desenhando ===
+       Paths começam invisíveis via CSS (stroke-dasharray: 200, offset: 200,
+       sem flash). Aqui mediro o comprimento real e refino, depois animo
+       quando o elemento entra na viewport. */
+    function setupDrawOn() {
+      const items = document.querySelectorAll(".draw-on");
+      if (prefersReducedMotion) return;
+
+      items.forEach((item) => {
+        const paths = item.querySelectorAll("svg path");
+        paths.forEach((path) => {
+          const len = path.getTotalLength();
+          path.style.strokeDasharray = String(len);
+          path.style.strokeDashoffset = String(len);
+        });
+        const span = item.querySelector("span");
+        if (span) span.style.opacity = "0";
+      });
+
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+          if (!entry.isIntersecting) return;
+          const paths = entry.target.querySelectorAll("svg path");
+          paths.forEach((path, i) => {
+            /* Path 1 (curva) em 0ms, path 2 (seta) em 250ms. 800ms
+               cobre o gesto inteiro sem se arrastar. */
+            path.style.transition = `stroke-dashoffset 800ms cubic-bezier(.2,.7,.2,1) ${i * 250}ms`;
+            requestAnimationFrame(() => {
+              path.style.strokeDashoffset = "0";
+            });
+          });
+          const span = entry.target.querySelector("span");
+          if (span) {
+            const labelDelay = (paths.length - 1) * 250 + 500;
+            span.style.transition = `opacity 400ms ease ${labelDelay}ms`;
+            requestAnimationFrame(() => {
+              span.style.opacity = "1";
+            });
+          }
+          observer.unobserve(entry.target);
+        });
+      }, { threshold: 0.4 });
+
+      items.forEach((item) => observer.observe(item));
+    }
+
+    startStagger();
+    setupDrawOn();
+
+    /* Rede de segurança: se alguma animação travar ou observer não
+       disparar, força os elementos pra o estado final após 2.5s.
+       Garante que a página nunca termine quebrada. */
+    setTimeout(() => {
+      document.querySelectorAll(".stagger:not(.is-in)").forEach((el) => {
+        el.classList.add("is-in");
+      });
+      document.querySelectorAll(".draw-on svg path").forEach((path) => {
+        if (path.style.strokeDashoffset !== "0") {
+          path.style.transition = "stroke-dashoffset 400ms ease";
+          path.style.strokeDashoffset = "0";
+        }
+      });
+      document.querySelectorAll(".draw-on span").forEach((span) => {
+        span.style.opacity = "1";
+      });
+    }, 2500);
+
+    /* === Toggle da busca colapsável (variação B) === */
+    const searchTrigger = document.querySelector(".controls__search-trigger");
+    const searchPanel = document.querySelector(".controls__search-panel");
+    const searchClose = document.querySelector(".controls__search-close");
+
+    /* Wrapper que recebe a classe .is-open. Trigger e panel ficam absolutos
+       dentro dele e alternam via opacity/transform — transição suave em vez
+       do swap binário com `hidden`. */
+    const searchWrap = document.querySelector(".controls__search");
+
+    function openSearch() {
+      if (!searchWrap || !searchPanel) return;
+      searchWrap.classList.add("is-open");
+      if (searchTrigger) searchTrigger.setAttribute("aria-expanded", "true");
+      /* Aguarda a transição antes de focar pra não interromper o fade */
+      setTimeout(() => {
+        const input = searchPanel.querySelector("input");
+        if (input) input.focus();
+      }, 200);
+    }
+    function closeSearch() {
+      if (!searchWrap) return;
+      searchWrap.classList.remove("is-open");
+      if (searchTrigger) {
+        searchTrigger.setAttribute("aria-expanded", "false");
+        searchTrigger.focus();
+      }
+    }
+    if (searchTrigger) searchTrigger.addEventListener("click", openSearch);
+    if (searchClose)   searchClose.addEventListener("click", closeSearch);
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && searchWrap && searchWrap.classList.contains("is-open")) closeSearch();
+    });
+
+    /* Snapshot pré-computado de qual post vira "featured" pra cada filtro.
+       JSON embutido no HTML pelo Astro. Estrutura: { all: {...}, cartas: {...}, ... } */
+    let featuresByView = {};
+    try {
+      const dataEl = document.getElementById("features-data");
+      if (dataEl) featuresByView = JSON.parse(dataEl.textContent || "{}");
+    } catch (e) { /* JSON inválido — segue com objeto vazio */ }
+
+    /* Preload das imagens dos featureds de cada categoria assim que
+       a página carrega. Quando o usuário trocar o filtro, a imagem
+       já estará no cache do browser e a troca é instantânea. */
+    Object.values(featuresByView).forEach((snap) => {
+      if (snap && snap.imageBig) {
+        const img = new Image();
+        img.src = snap.imageBig;
+      }
+    });
+
+    /* Fade-out → swap de conteúdo → fade-in, em vez de troca seca.
+       Timeout casa com a duração da transition do .feature (220ms). */
+    function applyFeature(snapshot) {
+      if (!feature) return;
+
+      const doUpdate = () => {
+        if (!snapshot) {
+          feature.hidden = true;
+          feature.classList.remove("is-swapping");
+          return;
+        }
+        feature.hidden = false;
+        feature.dataset.slug = snapshot.slug;
+
+        /* Imagem + link */
+        const mediaLink = feature.querySelector(".feature__media");
+        const mediaImg = feature.querySelector(".feature__media img");
+        if (mediaLink) {
+          mediaLink.setAttribute("href", `/${snapshot.slug}/`);
+          mediaLink.setAttribute("aria-label", snapshot.title);
+        }
+        if (mediaImg) mediaImg.setAttribute("src", snapshot.imageBig);
+
+        /* Meta */
+        const cat = feature.querySelector(".hero__cat");
+        const date = feature.querySelector(".hero__date");
+        const reading = feature.querySelector(".hero__reading");
+        if (cat) cat.textContent = snapshot.category;
+        if (date) date.textContent = snapshot.dateFormatted;
+        if (reading) reading.textContent = `${snapshot.readingMin} min de leitura`;
+
+        /* Título */
+        const titleLink = feature.querySelector(".hero__title a");
+        if (titleLink) {
+          titleLink.textContent = snapshot.title;
+          titleLink.setAttribute("href", `/${snapshot.slug}/`);
+        }
+
+        /* Marginalia "acabou de sair" e "um gostinho" também levam pro post.
+           O texto do primeiro alterna: "acabou de sair" só se for o post
+           mais recente do blog; "em destaque" caso contrário (mais recente
+           da categoria filtrada, mas não do blog inteiro). */
+        const noteLink = feature.querySelector(".hero__note");
+        if (noteLink) noteLink.setAttribute("href", `/${snapshot.slug}/`);
+        const noteSpan = feature.querySelector(".hero__note span");
+        if (noteSpan) noteSpan.textContent = snapshot.isLatest ? "acabou de sair" : "em destaque";
+        const tasteLink = feature.querySelector(".hero__taste");
+        if (tasteLink) tasteLink.setAttribute("href", `/${snapshot.slug}/`);
+
+        /* Dek */
+        const dek = feature.querySelector(".hero__dek");
+        if (dek) dek.textContent = snapshot.summary || "";
+
+        /* Excerpt — reconstrói os parágrafos com drop cap no primeiro */
+        const excerpt = feature.querySelector(".feature__excerpt");
+        if (excerpt) {
+          excerpt.setAttribute("href", `/${snapshot.slug}/`);
+          excerpt.setAttribute("aria-label", `Ler ${snapshot.title}`);
+          const body = Array.isArray(snapshot.body) ? snapshot.body : [];
+          excerpt.innerHTML = body.map((para, i) => {
+            const cls = i === 0 ? "excerpt__para excerpt__para--drop" : "excerpt__para";
+            /* Escape básico pra evitar HTML injection */
+            const safe = String(para)
+              .replace(/&/g, "&amp;")
+              .replace(/</g, "&lt;")
+              .replace(/>/g, "&gt;");
+            return `<p class="${cls}">${safe}</p>`;
+          }).join("");
+          excerpt.hidden = body.length === 0;
+        }
+
+        /* Fade-in (próximo frame pra browser pintar com opacidade 0 antes) */
+        requestAnimationFrame(() => feature.classList.remove("is-swapping"));
+      };
+
+      feature.classList.add("is-swapping");
+      /* 200ms casa com transition do .feature; menos que isso pisca,
+         mais que isso atrasa demais a percepção de resposta. */
+      setTimeout(doUpdate, 200);
+    }
+
+    filters.forEach((filterBtn) => {
+      filterBtn.addEventListener("click", () => {
+        const filter = filterBtn.dataset.filter;
+        filters.forEach((f) => f.classList.toggle("is-active", f === filterBtn));
+
+        /* 1. Atualiza o featured pro novo "mais recente" da categoria */
+        const snapshot = featuresByView[filter] || null;
+        applyFeature(snapshot);
+        const featuredSlug = snapshot ? snapshot.slug : null;
+
+        /* 2. Filtra notes: esconde as que não batem na categoria E a note
+           cujo slug virou o featured (pra não duplicar acima e abaixo).
+           Recomputa a alternância left/right baseada nos itens visíveis
+           pra manter o zig-zag consistente após o filtro. */
+        let visible = 0;
+        notes.forEach((note) => {
+          const matchesCategory = filter === "all" || note.dataset.category === filter;
+          const isFeatured = note.dataset.slug === featuredSlug;
+          note.hidden = !matchesCategory || isFeatured;
+          if (!note.hidden) {
+            /* Primeiro visível em --right pra contrastar com hero */
+            note.classList.toggle("note--right", visible % 2 === 0);
+            note.classList.toggle("note--left",  visible % 2 === 1);
+            visible += 1;
+          }
+        });
+
+        /* 3. Esconde o garden se não sobrou nada na lista (mantém só o featured) */
+        if (garden) garden.hidden = visible === 0;
+        if (filterEmpty) filterEmpty.hidden = visible > 0 || !!snapshot;
+      });
+    });
+
+    let attempts = 0;
+    function tryPagefind() {
+      if (typeof PagefindUI === "undefined") {
+        if (++attempts < 60) setTimeout(tryPagefind, 50);
+        return;
+      }
+      const search = document.querySelector("#search");
+      if (!search) return;
+      if (search.querySelector(".pagefind-ui__form")) return;
+      const icon = search.querySelector(".controls__search-icon");
+      if (icon) icon.remove();
+      const fallback = search.querySelector(".controls__search-fallback");
+      if (fallback) fallback.remove();
+      new PagefindUI({
+        element: "#search",
+        showSubResults: true,
+        showImages: false,
+        translations: {
+          placeholder: "buscar nas notas…",
+          clear_search: "limpar",
+          load_more: "mostrar mais",
+          search_label: "Buscar pelos posts",
+          filters_label: "Filtros",
+          zero_results: 'Nada encontrado pra "[SEARCH_TERM]".',
+          many_results: '[COUNT] resultados pra "[SEARCH_TERM]".',
+          one_result: '1 resultado pra "[SEARCH_TERM]".',
+          alt_search: 'Nada encontrado pra "[SEARCH_TERM]". Mostrando "[DIFFERENT_TERM]".',
+          search_suggestion: 'Nada encontrado pra "[SEARCH_TERM]". Tente: [DIFFERENT_TERMS].',
+          searching: "buscando…",
+        },
+      });
+    }
+    tryPagefind();
+  }
+
+  document.addEventListener("astro:page-load", setupHome);
+</script>
+
+<style is:global>
+  .feature.shell,
+  .controls.shell,
+  .garden.shell,
+  .signoff.shell,
+  .empty.shell {
+    width: min(960px, calc(100% - 56px));
+  }
+
+  /* ============== STAGGER (entrada coreografada no primeiro paint) ==============
+     Elementos com .stagger começam invisíveis com leve translateY.
+     JS adiciona .is-in com delay incremental, disparando o transition. */
+  .stagger {
+    opacity: 0;
+    transform: translateY(10px);
+    transition:
+      opacity .65s cubic-bezier(.2,.7,.2,1),
+      transform .65s cubic-bezier(.2,.7,.2,1);
+    will-change: opacity, transform;
+  }
+  .stagger.is-in {
+    opacity: 1;
+    transform: translateY(0);
+    will-change: auto;
+  }
+
+  /* ============== DRAW-ON (marginalia se desenhando) ==============
+     Pré-esconde os paths das setas via CSS antes do JS rodar, evitando
+     o flash de visibilidade no primeiro paint. 200 é maior que o
+     comprimento real de qualquer path nosso (~50-80), cobre com folga;
+     o JS depois substitui pelo valor exato via getTotalLength(). */
+  .draw-on .hero__note-arrow path,
+  .draw-on .hero__taste-arrow path {
+    stroke-dasharray: 200;
+    stroke-dashoffset: 200;
+  }
+  .draw-on span {
+    opacity: 0;
+    transition: opacity .4s ease;
+  }
+
+  /* Respeita preferência do usuário por menos movimento */
+  @media (prefers-reduced-motion: reduce) {
+    .stagger {
+      opacity: 1;
+      transform: none;
+      transition: none;
+    }
+    .draw-on span { opacity: 1 !important; }
+    .draw-on svg path {
+      stroke-dasharray: none !important;
+      stroke-dashoffset: 0 !important;
+    }
+  }
+
+  /* ============== TOPBAR ============== */
+  .topbar {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 20px 0 4px;
+  }
+  .topbar__me {
+    display: flex; align-items: center; gap: 14px;
+    text-decoration: none; color: inherit;
+  }
+  .topbar__me img {
+    width: 44px; height: 44px;
+    border-radius: 50%;
+    object-fit: cover; object-position: center top;
+    filter: saturate(0.95);
+  }
+  .topbar__me-text { display: flex; flex-direction: column; line-height: 1.18; }
+  .topbar__me-text strong {
+    font-family: 'Fraunces', serif;
+    font-variation-settings: 'opsz' 24, 'SOFT' 100, 'wght' 500;
+    font-weight: 500;
+    font-size: 19px;
+    color: var(--ink);
+    letter-spacing: -0.005em;
+  }
+  .topbar__me-text em {
+    font-style: italic;
+    font-size: 13px;
+    color: var(--ink-soft);
+  }
+
+  /* Sublinhado manuscrito ondulado embaixo da palavra em destaque (variação B
+     da exploracao de header). Conecta o header com a voz manuscrita do hero
+     (acabou de sair, um gostinho). */
+  .topbar__mark {
+    position: relative;
+    display: inline-block;
+  }
+  .topbar__underline {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -7px;
+    width: 100%;
+    height: 8px;
+    color: var(--terracotta);
+    pointer-events: none;
+  }
+  .topbar__links {
+    display: flex; align-items: center; gap: 18px;
+    font-family: 'Newsreader', serif;
+    font-size: 14px;
+    color: var(--ink-soft);
+  }
+  .topbar__links a {
+    text-decoration: none;
+    transition: color .25s ease;
+    border-bottom: 1px solid transparent;
+    padding-bottom: 2px;
+  }
+  .topbar__links a:hover { color: var(--terracotta); border-bottom-color: var(--terracotta); }
+  .topbar__links a { display: inline-flex; align-items: center; gap: 5px; }
+  /* Triângulo de play indicando que o link leva a vídeos. Cor faint
+     pra não competir com o texto, vira terracota no hover. */
+  .topbar__play {
+    flex-shrink: 0;
+    color: var(--ink-faint);
+    transition: color .25s ease;
+  }
+  .topbar__links a:hover .topbar__play { color: var(--terracotta); }
+
+  /* ============== FEATURE GRID ==============
+     Imagem ocupa coluna esquerda em duas linhas (hero + excerpt).
+     Layout: media | hero
+              media | excerpt */
+  .feature {
+    margin-top: 28px;
+    transition: opacity .22s ease;
+  }
+  /* Aplicado momentaneamente pelo JS quando o filtro troca o featured,
+     suavizando o swap de imagem/texto/dek/excerpt. */
+  .feature.is-swapping { opacity: 0; }
+  .feature__grid {
+    display: grid;
+    grid-template-columns: 360px 1fr;
+    grid-template-areas:
+      "media hero"
+      "media excerpt";
+    column-gap: 36px;
+    row-gap: 16px;
+    align-items: start;
+  }
+  .feature__media {
+    grid-area: media;
+    display: block;
+    overflow: hidden;
+    border-radius: 2px;
+    background: var(--paper-deep, #ECE2D0);
+    /* Sombra mais marcada que antes — dá mais corpo pra imagem destacar
+       do papel, agora que tiramos o filtro lavado. */
+    box-shadow: 0 1px 0 rgba(42, 32, 24, 0.08), 0 30px 56px -22px rgba(42, 32, 24, 0.42);
+    align-self: stretch;
+    min-height: 480px;
+  }
+  .feature__media img {
+    width: 100%; height: 100%;
+    object-fit: cover; display: block;
+    /* Sem sepia/saturate-down: imagens são curadas, deixa elas falarem
+       no tom real. Pequeno boost de contraste pra não parecer "soft". */
+    filter: contrast(1.03);
+    transition: transform .9s cubic-bezier(.2,.7,.2,1);
+  }
+  .feature__media:hover img { transform: scale(1.025); }
+
+  /* ============== HERO TEXT (cell de cima da direita) ============== */
+  .feature__hero {
+    grid-area: hero;
+    padding-top: 4px;
+    display: flex;
+    flex-direction: column;
+  }
+  .hero__meta {
+    margin: 0 0 14px;
+    font-family: 'Newsreader', serif;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    display: flex; flex-wrap: wrap; gap: 10px; align-items: center;
+  }
+  .hero__cat { color: var(--terracotta); }
+  .hero__sep { color: var(--rule); }
+  .hero__title {
+    margin: 0;
+    font-family: 'Fraunces', serif;
+    font-variation-settings: 'opsz' 144, 'SOFT' 100, 'wght' 400;
+    font-weight: 400;
+    font-size: clamp(30px, 3.6vw, 46px);
+    line-height: 1.04;
+    letter-spacing: -0.018em;
+    color: var(--ink);
+  }
+  .hero__title a { text-decoration: none; transition: color .3s ease; }
+  .hero__title a:hover { color: var(--terracotta); }
+  .hero__dek {
+    margin: 50px 0 0;
+    max-width: 50ch;
+    font-family: 'Newsreader', serif;
+    font-variation-settings: 'opsz' 22;
+    font-size: 17px;
+    line-height: 1.55;
+    color: var(--ink-soft);
+  }
+
+  /* anotações manuscritas — mesmo estilo da home principal */
+  .hero__note {
+    margin: 56px 0 0;
+    display: inline-flex; align-items: center; gap: 14px;
+    align-self: flex-start;
+    font-family: 'Caveat', cursive;
+    font-weight: 500;
+    font-size: 22px;
+    line-height: 1;
+    color: var(--terracotta);
+    text-decoration: none;
+    transform: rotate(-1deg);
+    transition: transform .35s cubic-bezier(.2,.7,.2,1), color .25s ease;
+  }
+  .hero__note:hover {
+    color: var(--ink);
+    transform: rotate(-1.6deg) translateX(2px);
+  }
+  .hero__note:hover .hero__note-arrow {
+    color: var(--ink);
+  }
+  .hero__note-arrow {
+    width: 80px; height: 24px;
+    color: var(--terracotta);
+    flex-shrink: 0;
+  }
+  .hero__taste {
+    margin: 14px 0 0;
+    display: inline-flex;
+    align-items: center;
+    align-self: flex-end;
+    gap: 8px;
+    font-family: 'Caveat', cursive;
+    font-weight: 500;
+    font-size: 22px;
+    line-height: 1;
+    color: var(--terracotta);
+    text-decoration: none;
+    transform: translateY(8px) rotate(2deg);
+    transition: transform .35s cubic-bezier(.2,.7,.2,1), color .25s ease;
+  }
+  .hero__taste:hover {
+    color: var(--ink);
+    transform: translateY(6px) rotate(2.6deg) translateX(-2px);
+  }
+  .hero__taste:hover .hero__taste-arrow {
+    color: var(--ink);
+  }
+  .hero__taste > span { transform: translateY(-8px); }
+  .hero__taste-arrow {
+    width: 32px; height: 24px;
+    color: var(--terracotta);
+    flex-shrink: 0;
+    transform: scaleX(-1);
+    transition: color .25s ease;
+  }
+
+  /* ============== EXCERPT (cell de baixo da direita, 2 colunas) ============== */
+  .feature__excerpt {
+    grid-area: excerpt;
+    display: block;
+    column-count: 2;
+    column-gap: 36px;
+    column-rule: 1px solid var(--rule-soft);
+
+    font-family: 'Newsreader', serif;
+    font-variation-settings: 'opsz' 22;
+    font-size: 16.5px;
+    line-height: 1.65;
+    color: var(--ink);
+    text-align: justify;
+    hyphens: auto;
+
+    text-decoration: none;
+    cursor: pointer;
+    padding: 12px 14px;
+    margin: -12px -14px;
+    border-radius: 3px;
+    /* Inclui opacity/transform pra que o stagger animation funcione
+       no .feature__excerpt.stagger.is-in (.stagger sozinho perde aqui
+       por ordem em cascata). */
+    transition:
+      background .35s ease,
+      opacity .65s cubic-bezier(.2,.7,.2,1),
+      transform .65s cubic-bezier(.2,.7,.2,1);
+    -webkit-tap-highlight-color: transparent;
+  }
+  .feature__excerpt:hover {
+    background: rgba(154, 63, 34, 0.04);
+  }
+  .feature__excerpt:hover .excerpt__para--drop::first-letter {
+    color: var(--ink);
+  }
+
+  .excerpt__para {
+    margin: 0;
+    text-indent: 1.4em;
+  }
+  .excerpt__para--drop { text-indent: 0; }
+
+  .excerpt__para--drop::first-letter {
+    font-family: 'Fraunces', serif;
+    font-variation-settings: 'opsz' 144, 'SOFT' 100, 'wght' 400;
+    font-style: italic;
+    font-weight: 400;
+    color: var(--terracotta);
+    initial-letter: 3;
+    -webkit-initial-letter: 3;
+    margin-right: 0.6em;
+    padding-top: 0.05em;
+    transition: color .35s ease;
+  }
+  @supports not ((initial-letter: 3) or (-webkit-initial-letter: 3)) {
+    .excerpt__para--drop::first-letter {
+      float: left;
+      font-size: 4.6em;
+      line-height: 0.85;
+      margin: 0.04em 0.10em -0.04em 0;
+    }
+  }
+
+  .excerpt__para:last-child::after {
+    content: "  (…)";
+    color: var(--terracotta);
+    font-style: italic;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    transition: color .35s ease;
+  }
+  .feature__excerpt:hover .excerpt__para:last-child::after {
+    color: var(--ink);
+  }
+
+  /* ============== CONTROLS (filtros + busca) — variação B ============== */
+  /* Coluna direita reservada em 280px sempre. Quando o trigger está
+     visível, ele se justifica à direita dentro dessa coluna. Quando
+     o panel abre, preenche os 280px. Sem layout-shift. */
+  .controls {
+    margin-top: 24px;
+    padding: 14px 0;
+    display: grid;
+    grid-template-columns: 1fr 280px;
+    gap: 32px;
+    align-items: baseline;
+  }
+
+  /* === Filtros tipográficos === */
+  .controls__filters {
+    display: flex; flex-wrap: wrap;
+    align-items: baseline;
+    gap: 10px;
+    min-width: 0;
+    font-family: 'Newsreader', serif;
+  }
+  .filter {
+    appearance: none;
+    background: transparent;
+    border: 0;
+    padding: 0;
+    font: inherit;
+    font-size: 16px;
+    color: var(--ink-soft);
+    cursor: pointer;
+    transition: color .25s ease;
+  }
+  .filter:hover { color: var(--ink); }
+  .filter.is-active {
+    font-family: 'Fraunces', serif;
+    font-variation-settings: 'opsz' 60, 'SOFT' 100, 'wght' 400;
+    font-style: italic;
+    color: var(--terracotta);
+  }
+  .filter__count {
+    font-size: 10px;
+    color: var(--ink-faint);
+    margin-left: 2px;
+    font-style: normal;
+    font-variant-numeric: tabular-nums;
+  }
+  .filter.is-active .filter__count {
+    color: var(--terracotta);
+    opacity: 0.6;
+  }
+  .filter-sep {
+    color: rgba(154, 63, 34, 0.45);
+    font-size: 14px;
+    user-select: none;
+  }
+
+  /* === Busca colapsável: trigger + panel ===
+     Trigger e panel posicionados absolutos no mesmo container.
+     Alternam via .is-open: opacidade + translateX leve, sem swap
+     binário. Layout não sofre porque o min-height reserva o espaço. */
+  .controls__search {
+    position: relative;
+    min-height: 30px;
+  }
+  .controls__search-trigger {
+    position: absolute;
+    top: 50%;
+    right: 0;
+    transform: translateY(-50%) translateX(0);
+    appearance: none;
+    background: transparent;
+    border: 0;
+    padding: 4px 0;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-family: 'Newsreader', serif;
+    font-style: italic;
+    font-size: 14px;
+    color: var(--ink-soft);
+    opacity: 1;
+    transition: opacity .25s ease, transform .3s cubic-bezier(.2,.7,.2,1), color .25s ease;
+  }
+  .controls__search-trigger:hover { color: var(--terracotta); }
+  .controls__search-trigger:focus-visible {
+    outline: 2px solid var(--terracotta);
+    outline-offset: 4px;
+    border-radius: 2px;
+  }
+  .controls__search.is-open .controls__search-trigger {
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(-50%) translateX(10px);
+  }
+
+  .controls__search-panel {
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    transform: translateY(-50%) translateX(-10px);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    border-bottom: 1px solid var(--terracotta);
+    padding: 4px 0;
+    color: var(--terracotta);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .25s ease, transform .3s cubic-bezier(.2,.7,.2,1);
+  }
+  .controls__search.is-open .controls__search-panel {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateY(-50%) translateX(0);
+  }
+  .controls__search-inner {
+    display: flex; align-items: center; gap: 8px;
+    flex: 1;
+    min-width: 0;
+  }
+  .controls__search-icon {
+    color: var(--ink-faint);
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+  }
+  .controls__search-panel:focus-within .controls__search-icon { color: var(--terracotta); }
+  .controls__search-fallback {
+    appearance: none;
+    border: 0; background: transparent;
+    flex: 1;
+    min-width: 0;
+    font-family: 'Newsreader', serif;
+    font-style: italic;
+    font-size: 14.5px;
+    color: var(--ink);
+    outline: none;
+    padding: 0;
+  }
+  .controls__search-fallback::placeholder { color: var(--ink-faint); }
+  .controls__search-close {
+    appearance: none;
+    background: transparent;
+    border: 0;
+    color: var(--ink-faint);
+    cursor: pointer;
+    font-size: 20px;
+    line-height: 1;
+    padding: 0 2px;
+    flex-shrink: 0;
+    transition: color .25s ease;
+  }
+  .controls__search-close:hover { color: var(--ink); }
+
+  /* Defensiva CSS: se o Pagefind UI carregou (.pagefind-ui__form presente),
+     esconde meu ícone e fallback mesmo se o JS de cleanup falhar. */
+  .controls__search-inner:has(.pagefind-ui__form) .controls__search-icon,
+  .controls__search-inner:has(.pagefind-ui__form) .controls__search-fallback {
+    display: none;
+  }
+
+  /* === Pagefind UI dentro do panel === */
+  .controls__search #search {
+    --pagefind-ui-scale: 0.72;
+    --pagefind-ui-primary: var(--terracotta);
+    --pagefind-ui-text: var(--ink);
+    --pagefind-ui-background: transparent;
+    --pagefind-ui-border: transparent;
+    --pagefind-ui-tag: var(--terracotta-soft);
+    --pagefind-ui-border-width: 0;
+    --pagefind-ui-border-radius: 0;
+    --pagefind-ui-image-border-radius: 2px;
+    --pagefind-ui-font: 'Newsreader', serif;
+    flex: 1;
+    min-width: 0;
+  }
+  .controls__search .pagefind-ui__form {
+    background: transparent !important;
+    border: 0 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+  .controls__search .pagefind-ui__form::before {
+    /* Pagefind injeta a própria lupa via ::before. No layout de panel não
+       há espaço pra ela — escondemos pra não duplicar com o SVG do trigger. */
+    display: none !important;
+  }
+  .controls__search .pagefind-ui__search-input {
+    font-family: 'Newsreader', serif !important;
+    font-style: italic;
+    font-size: 14.5px !important;
+    color: var(--ink);
+    background: transparent;
+    padding: 0 !important;
+    height: 22px !important;
+    border: 0 !important;
+  }
+  .controls__search .pagefind-ui__search-input::placeholder {
+    color: var(--ink-faint);
+    font-style: italic;
+  }
+  .controls__search .pagefind-ui__search-clear { padding: 4px 8px !important; }
+  .controls__search .pagefind-ui__drawer {
+    position: absolute;
+    top: calc(100% + 10px);
+    right: 0;
+    width: min(420px, calc(100vw - 80px));
+    max-height: 70vh;
+    overflow-y: auto;
+    background: var(--paper);
+    border: 1px solid var(--rule);
+    border-radius: 6px;
+    padding: 14px 16px;
+    box-shadow: 0 12px 32px -12px rgba(42, 32, 24, 0.22);
+    z-index: 30;
+  }
+  .controls__search .pagefind-ui__result-link {
+    font-family: 'Fraunces', serif;
+    font-size: 17px;
+    color: var(--ink);
+    text-decoration: none;
+  }
+  .controls__search .pagefind-ui__result-link:hover { color: var(--terracotta); }
+  .controls__search .pagefind-ui__result-excerpt mark {
+    background: var(--terracotta-soft);
+    color: var(--terracotta);
+    padding: 1px 3px;
+    border-radius: 2px;
+  }
+
+  /* ============== GARDEN ============== */
+  /* Margem média pra desgrudar do hero sem deixar o heading órfão.
+     A intenção é o heading "também por aqui" ficar mais próximo das
+     notes do que do hero, agrupando-se visualmente com elas. */
+  .garden { margin-top: 72px; }
+  .garden__head {
+    display: flex; align-items: center;
+    gap: 18px;
+    margin: 0 0 12px;
+  }
+  /* Régua fina à direita do título: a seção ganha uma "linha editorial"
+     que ancora o heading no espaço. Fade terracota pra trazer cor sem
+     virar barra forte. */
+  .garden__head::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(90deg,
+      rgba(154, 63, 34, 0.35),
+      rgba(154, 63, 34, 0.05) 70%,
+      transparent);
+  }
+  .garden__head h2 {
+    margin: 0;
+    font-family: 'Fraunces', serif;
+    font-variation-settings: 'opsz' 60, 'SOFT' 100, 'wght' 500;
+    font-weight: 500;
+    font-size: 24px;
+    color: var(--ink);
+    letter-spacing: -0.005em;
+    flex-shrink: 0;
+  }
+  .garden__head p {
+    margin: 0;
+    font-family: 'Newsreader', serif;
+    font-style: italic;
+    font-size: 14px;
+    color: var(--ink-soft);
+  }
+  /* ============== NOTES — zig-zag editorial ==============
+     Cada post é uma "página" assimétrica: imagem em retrato de
+     um lado, texto do outro. A cada item, troca o lado. Imagem
+     no formato 4/5 dá presença editorial sem dominar a página. */
+  .notes {
+    display: flex;
+    flex-direction: column;
+    gap: 56px;
+    margin-top: 16px;
+  }
+  .note { display: block; }
+  .note__link {
+    display: grid;
+    grid-template-columns: 300px 1fr;
+    gap: 40px;
+    align-items: center;
+    text-decoration: none;
+    color: inherit;
+  }
+  .note--right .note__link {
+    grid-template-columns: 1fr 300px;
+  }
+  .note--right .note__media { order: 2; }
+  .note--right .note__text  { order: 1; }
+  /* Landscape 5:4 ao invés de portrait 4:5: capas/thumbs do Notion
+     são geralmente horizontais (paisagem, cena), e portrait alto
+     corta o assunto. Sombra média + risco terracota 2px abaixo:
+     hero tem sombra dramática como peça âncora; notes têm sombra
+     mais contida + risco de cor pra dar presença e vida sem brigar
+     com o hero. */
+  .note__media {
+    aspect-ratio: 5 / 4;
+    overflow: hidden;
+    background: var(--paper-deep, #ECE2D0);
+    box-shadow:
+      0 2px 0 var(--terracotta),
+      0 1px 0 rgba(42, 32, 24, 0.08),
+      0 24px 44px -16px rgba(42, 32, 24, 0.36);
+    transition: box-shadow .35s ease;
+  }
+  .note:hover .note__media {
+    box-shadow:
+      0 2px 0 var(--terracotta),
+      0 1px 0 rgba(42, 32, 24, 0.08),
+      0 30px 52px -14px rgba(42, 32, 24, 0.44);
+  }
+  .note__media img {
+    width: 100%; height: 100%;
+    object-fit: cover; display: block;
+    filter: contrast(1.03);
+    transition: transform .8s cubic-bezier(.2,.7,.2,1);
+  }
+  .note:hover .note__media img { transform: scale(1.04); }
+  .note__text { min-width: 0; }
+  .note__meta {
+    margin: 0 0 12px;
+    display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
+    font-family: 'Newsreader', serif;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+  }
+  .note__cat { color: var(--terracotta); }
+  .note__sep { color: var(--rule); }
+  .note__title {
+    margin: 0 0 14px;
+    font-family: 'Fraunces', serif;
+    font-variation-settings: 'opsz' 96, 'SOFT' 100, 'wght' 400;
+    font-weight: 400;
+    font-size: clamp(24px, 2.6vw, 32px);
+    line-height: 1.1;
+    letter-spacing: -0.01em;
+    color: var(--ink);
+    transition: color .25s ease;
+  }
+  .note:hover .note__title { color: var(--terracotta); }
+  .note__dek {
+    margin: 0;
+    max-width: 50ch;
+    font-family: 'Newsreader', serif;
+    font-style: italic;
+    font-size: 16px;
+    line-height: 1.55;
+    color: var(--ink-soft);
+  }
+
+  .filter-empty {
+    text-align: center;
+    padding: 56px 16px;
+    color: var(--ink-soft);
+    font-style: italic;
+    font-size: 16px;
+  }
+  .filter-empty p { margin: 0; }
+
+  /* ============== SIGNOFF ============== */
+  .signoff {
+    margin: 64px auto 96px;
+    text-align: center;
+    font-family: 'Newsreader', serif;
+    font-style: italic;
+    color: var(--ink-soft);
+    font-size: 15px;
+  }
+  .signoff p { margin: 0; line-height: 1.7; }
+  .signoff__hand {
+    display: inline-block;
+    margin-top: 6px;
+    font-family: 'Caveat', cursive;
+    font-weight: 600;
+    font-style: normal;
+    font-size: 22px;
+    color: var(--terracotta);
+    transform: rotate(-1deg);
+  }
+
+  /* ============== EMPTY STATE ============== */
+  .empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 88px 16px 120px;
+    margin-top: 24px;
+  }
+  .empty__ornament {
+    width: 96px; height: 18px;
+    color: var(--terracotta);
+    margin: 0 0 32px;
+  }
+  .empty__title {
+    margin: 0 0 16px;
+    font-family: 'Fraunces', serif;
+    font-variation-settings: 'opsz' 144, 'SOFT' 100, 'wght' 400;
+    font-weight: 400;
+    font-size: clamp(28px, 3.6vw, 40px);
+    line-height: 1.06;
+    letter-spacing: -0.018em;
+    color: var(--ink);
+  }
+  .empty__title em {
+    font-style: italic;
+    color: transparent;
+    -webkit-text-stroke: 1.1px var(--ink);
+    paint-order: stroke fill;
+  }
+  .empty p {
+    margin: 0;
+    max-width: 32ch;
+    font-style: italic;
+    font-size: 16px;
+    color: var(--ink-soft);
+  }
+
+  /* ============== RESPONSIVE ============== */
+  @media (max-width: 900px) {
+    .feature__grid {
+      grid-template-columns: 280px 1fr;
+      column-gap: 28px;
+    }
+    .feature__media { min-height: 380px; }
+  }
+
+  @media (max-width: 720px) {
+    .topbar { flex-direction: column; gap: 14px; align-items: flex-start; }
+    .feature__grid {
+      grid-template-columns: 1fr;
+      grid-template-areas:
+        "media"
+        "hero"
+        "excerpt";
+      row-gap: 22px;
+    }
+    .feature__media {
+      min-height: 0;
+      aspect-ratio: 16 / 10;
+    }
+    .feature__excerpt { column-count: 1; column-rule: 0; column-gap: 0; }
+    .notes { gap: 40px; }
+    .note__link,
+    .note--right .note__link {
+      grid-template-columns: 1fr;
+      gap: 18px;
+    }
+    .note--right .note__media,
+    .note--right .note__text { order: initial; }
+    .note__media { aspect-ratio: 16 / 10; }
+    .controls { grid-template-columns: 1fr; gap: 14px; }
+    .controls__search { justify-content: flex-start; }
+  }
+</style>

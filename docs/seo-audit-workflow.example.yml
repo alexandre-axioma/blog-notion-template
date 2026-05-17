@@ -1,0 +1,22 @@
+name: SEO Audit
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 */6 * * *"
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Run PageSpeed SEO audit
+        env:
+          SEO_AUDIT_SECRET: ${{ secrets.SEO_AUDIT_SECRET }}
+          BLOG_URL: ${{ vars.BLOG_URL }}
+        run: |
+          test -n "${SEO_AUDIT_SECRET}"
+          test -n "${BLOG_URL}"
+          curl --fail --show-error --silent \
+            --request POST \
+            --header "Authorization: Bearer ${SEO_AUDIT_SECRET}" \
+            "${BLOG_URL%/}/api/seo-audit"

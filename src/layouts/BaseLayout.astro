@@ -1,0 +1,78 @@
+---
+import "@/styles/global.css";
+import { ClientRouter } from "astro:transitions";
+
+type Props = {
+  title: string;
+  description?: string;
+  ogImage?: string;
+  hideFooter?: boolean;
+};
+
+const {
+  title,
+  description = "Notas, ideias e tutoriais publicados a partir do Notion.",
+  ogImage = "/static/images/og-image.svg",
+  hideFooter = false,
+} = Astro.props;
+---
+
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#F4EDE0" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:image" content={ogImage} />
+    <meta property="og:locale" content="pt_BR" />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={ogImage} />
+
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,SOFT,wght@0,9..144,100,400;0,9..144,100,500;1,9..144,100,400&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=Caveat:wght@500;600&display=swap"
+      rel="stylesheet"
+    />
+
+    <!-- KaTeX (math rendering) — server-rendered, this is just the styles -->
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css"
+      integrity="sha384-nB0miv6/jRmo5UMMR1wu3Gz6NLsoTkbqJghGIsx//Rlm+ZU03BU6SQNC66uf4l5+"
+      crossorigin="anonymous"
+    />
+
+    <ClientRouter />
+  </head>
+  <body>
+    <slot />
+    {!hideFooter && (
+      <footer class="global-footer">
+        <div class="shell global-footer__inner">
+          <a href="/">Seu Blog</a>
+          <span class="global-footer__sep" aria-hidden="true"></span>
+          <a href="/about">about</a>
+          <span class="global-footer__sep" aria-hidden="true"></span>
+          <a class="global-footer__rss" href="/rss.xml" aria-label="Feed RSS">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <path d="M6.18 15.64a2.18 2.18 0 0 1 2.18 2.18C8.36 19 7.38 20 6.18 20A2.18 2.18 0 0 1 4 17.82a2.18 2.18 0 0 1 2.18-2.18ZM4 4.44A15.56 15.56 0 0 1 19.56 20h-2.83A12.73 12.73 0 0 0 4 7.27V4.44Zm0 5.66A9.9 9.9 0 0 1 13.9 20h-2.82A7.07 7.07 0 0 0 4 12.93V10.1Z" />
+            </svg>
+            RSS
+          </a>
+        </div>
+      </footer>
+    )}
+  </body>
+</html>
