@@ -99,6 +99,10 @@ Depois do primeiro deploy na Vercel:
 
 Este starter ignora `page.content_updated` para evitar deploy em todo autosave do Notion. Para publicar atualizações, altere uma propriedade relevante, como `Status`, `Slug`, `Categoria`, `Tags` ou `Data de Publicação`.
 
+Não é necessário configurar GitHub Actions para publicar posts. O fluxo principal usa o webhook do Notion chamando a função `/api/notion-webhook`, que por sua vez chama o deploy hook da Vercel.
+
+Para diagnosticar, abra `Logs` na Vercel e procure `Notion webhook events received`. Se esse log não aparecer, o Notion não chamou a função. Se aparecer com `Skipping`, leia o motivo no log. Se aparecer `Triggering deploy`, mas não surgir deployment novo, recrie `VERCEL_DEPLOY_HOOK_URL`.
+
 ## Guia completo
 
 O passo a passo completo está em:

@@ -41,7 +41,13 @@ export default async function handler(request: VercelRequest, response: VercelRe
     }
   }
 
-  const shouldDeploy = await shouldTriggerDeploy(request.body);
+  const events = getWebhookEvents(request.body);
+  console.log(
+    "Notion webhook events received:",
+    events.map((event) => event?.type ?? "unknown").join(", ")
+  );
+
+  const shouldDeploy = await shouldTriggerDeploy(events);
 
   if (!shouldDeploy) {
     response.status(200).json({ ok: true, deployTriggered: false, skipped: true });
@@ -69,7 +75,29 @@ export default async function handler(request: VercelRequest, response: VercelRe
   });
 }
 
-async function shouldTriggerDeploy(payload: any): Promise<boolean> {
+function getWebhookEvents(payload: any): any[] {
+  if (Array.isArray(payload)) {
+    return payload;
+  }
+
+  if (Array.isArray(payload?.events)) {
+    return payload.events;
+  }
+
+  return [payload];
+}
+
+async function shouldTriggerDeploy(events: any[]): Promise<boolean> {
+  for (const event of events) {
+    if (await shouldTriggerDeployForEvent(event)) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+async function shouldTriggerDeployForEvent(payload: any): Promise<boolean> {
   const eventType = payload?.type;
 
   if (eventType === "page.deleted") {
@@ -77,34 +105,44 @@ async function shouldTriggerDeploy(payload: any): Promise<boolean> {
   }
 
   if (!["page.content_updated", "page.properties_updated", "page.created"].includes(eventType)) {
+    console.log("Skipping Notion webhook event with unsupported type:", eventType ?? "unknown");
     return false;
   }
 
   if (eventType === "page.content_updated") {
+    console.log("Skipping page.content_updated to avoid deploys on Notion autosave.");
     return false;
   }
 
   const pageId = payload?.entity?.type === "page" ? payload.entity.id : null;
 
   if (!pageId) {
+    console.log("Skipping Notion webhook event without a page entity.");
     return false;
   }
 
   const page = await retrieveNotionPage(pageId);
 
   if (!page) {
+    console.log("Skipping Notion webhook event because the page could not be retrieved.");
     return false;
   }
 
   if (!isBlogPage(page)) {
+    console.log("Skipping Notion webhook event because the page is not part of the configured blog database.");
     return false;
   }
 
   if (eventType === "page.properties_updated") {
+    console.log("Triggering deploy for page.properties_updated.");
     return true;
   }
 
-  return shouldPublishPage(page.properties ?? {});
+  const shouldPublish = shouldPublishPage(page.properties ?? {});
+
+  console.log("Page created webhook publish check:", shouldPublish ? "published" : "not published");
+
+  return shouldPublish;
 }
 
 async function retrieveNotionPage(pageId: string): Promise<any | null> {
@@ -126,9 +164,19 @@ async function retrieveNotionPage(pageId: string): Promise<any | null> {
 
 function isBlogPage(page: any): boolean {
   const databaseId = normalizeId(process.env.NOTION_BLOG_DATABASE_ID ?? "");
-  const parentId = normalizeId(page?.parent?.database_id ?? "");
+  const parentIds = [
+    page?.parent?.database_id,
+    page?.parent?.data_source_id,
+    page?.parent?.id,
+  ]
+    .filter(Boolean)
+    .map((value) => normalizeId(String(value)));
 
-  return Boolean(databaseId && parentId && databaseId === parentId);
+  if (databaseId && parentIds.includes(databaseId)) {
+    return true;
+  }
+
+  return hasBlogProperties(page.properties ?? {});
 }
 
 function isValidSignature(body: string, signature: string, verificationToken: string): boolean {
@@ -153,6 +201,14 @@ function getProperty(pageProperties: Record<string, any>, names: string[]): any 
   }
 
   return null;
+}
+
+function hasBlogProperties(pageProperties: Record<string, any>): boolean {
+  return Boolean(
+    getProperty(pageProperties, statusPropertyNames) &&
+    getProperty(pageProperties, ["Slug"]) &&
+    getProperty(pageProperties, ["Titulo", "Título", "Title", "Name"])
+  );
 }
 
 function shouldPublishPage(pageProperties: Record<string, any>): boolean {

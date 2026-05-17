@@ -362,6 +362,8 @@ Na Vercel, você deve ver um novo deployment começando sozinho. Quando o deploy
 
 Se o post apareceu, o fluxo principal está funcionando: Notion, webhook, Vercel e blog publicado.
 
+Você não precisa configurar GitHub Actions para esse fluxo principal. O rebuild automático vem do deploy hook da Vercel, chamado pela função `/api/notion-webhook`.
+
 ## Como atualizar um post depois
 
 Este starter ignora mudanças no corpo do texto para evitar deploy em todo autosave do Notion.
@@ -465,7 +467,23 @@ Verifique:
 - `NOTION_WEBHOOK_VERIFICATION_TOKEN` está salvo na Vercel.
 - Você fez redeploy depois de adicionar as variáveis.
 - A URL do webhook no Notion aponta para `/api/notion-webhook`.
+- A subscription do Notion aparece como active.
+- Os eventos marcados no Notion são `page.created`, `page.properties_updated` e `page.deleted`.
 - Você mudou uma propriedade relevante, não apenas o corpo do texto.
+
+Depois teste pelo caminho mais simples:
+
+1. Crie um post novo na database.
+2. Preencha `Titulo`, `Slug`, `Resumo do Conteúdo`, `Categoria` e `Data de Publicação`.
+3. Coloque `Status` como `Publicado`.
+4. Na Vercel, abra `Logs`.
+5. Procure uma linha começando com `Notion webhook events received`.
+
+Se essa linha não aparece, o Notion não está chamando a função. Revise a URL do webhook, a verificação da subscription, os eventos marcados e o `Content access` da integration.
+
+Se a linha aparece, mas também aparece `Skipping`, leia o motivo no próprio log. Normalmente é porque o post não está na database configurada, não tem as propriedades esperadas ou só houve mudança no corpo do texto.
+
+Se aparece `Triggering deploy for page.properties_updated` ou `Page created webhook publish check: published`, mas não nasce deployment novo, o problema está no `VERCEL_DEPLOY_HOOK_URL`. Nesse caso, recrie o deploy hook em `Settings` -> `Git` -> `Deploy Hooks`, atualize a env var e faça redeploy.
 
 ### Editei o texto e nada mudou no site
 
