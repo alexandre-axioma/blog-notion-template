@@ -39,7 +39,7 @@ export default async function handler(request: VercelRequest, response: VercelRe
     page_size: 100,
   });
 
-  const publishedPages = pages.results.filter((page: any) => shouldPublishPage(page.properties ?? {}));
+  const publishedPages = pages.results.filter((page: any) => shouldAuditPage(page.properties ?? {}));
   const results = [];
 
   for (const page of publishedPages as any[]) {
@@ -71,6 +71,10 @@ export default async function handler(request: VercelRequest, response: VercelRe
     audited: results.length,
     results,
   });
+}
+
+function shouldAuditPage(pageProperties: Record<string, any>): boolean {
+  return shouldPublishPage(pageProperties) && !hasSeoScore(pageProperties);
 }
 
 function isAuthorized(request: VercelRequest): boolean {
@@ -123,6 +127,12 @@ function shouldPublishPage(pageProperties: Record<string, any>): boolean {
   }
 
   return isPublishDateDue(getProperty(pageProperties, properties.publishedAt));
+}
+
+function hasSeoScore(pageProperties: Record<string, any>): boolean {
+  const score = getProperty(pageProperties, properties.seoScore)?.number;
+
+  return typeof score === "number";
 }
 
 function isPublishDateDue(dateProperty: any): boolean {
