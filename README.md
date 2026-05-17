@@ -46,6 +46,8 @@ NOTION_WEBHOOK_VERIFICATION_TOKEN=token_que_apareceu_no_log
 
 `VERCEL_DEPLOY_HOOK_URL` e `NOTION_WEBHOOK_VERIFICATION_TOKEN` entram depois do primeiro deploy, quando você configurar o deploy hook da Vercel e o webhook do Notion.
 
+Use em `NOTION_BLOG_DATABASE_ID` o ID da database `Blog Content Management`, não o ID da página/painel `Blog Notion Template`.
+
 ## Notion integration
 
 Crie uma connection em:
@@ -61,9 +63,11 @@ Capabilities recomendadas para o fluxo principal:
 - `Insert content`: desligado
 - `No user information`: selecionado
 
-Depois vá em `Content access`, clique em `Edit access` e selecione a página principal duplicada, `Blog Notion Template`, ou a database `Blog Content Management`. Sem essa etapa, o build não consegue ler os posts.
+Depois vá em `Content access`, clique em `Edit access` e selecione a página principal duplicada, `Blog Notion Template`. Se o Notion mostrar a database `Blog Content Management` separadamente, selecione ela também. Sem essa etapa, o build não consegue ler os posts.
 
-Use em `NOTION_BLOG_DATABASE_ID` o ID da database `Blog Content Management`, não o ID da página dashboard `Blog Notion Template`.
+No template, `Blog Notion Template` é a página/painel visual. `Blog Content Management` é a database real dos posts. O código consulta a database, então o ID usado em `NOTION_BLOG_DATABASE_ID` precisa vir de `Blog Content Management`.
+
+Se a URL da database tiver `?v=`, use o ID antes de `?v=`. O valor depois de `?v=` é o ID da view, não da database.
 
 ## Publicação automática
 

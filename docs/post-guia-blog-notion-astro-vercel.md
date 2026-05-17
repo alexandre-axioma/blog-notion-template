@@ -49,7 +49,18 @@ https://fixed-sushi-1bf.notion.site/Blog-Notion-Template-f1d13d4a408c8285a99c011
 
 Clique em `Duplicate` e escolha a workspace onde seu blog vai viver. O Notion vai copiar a página, a database, as views e alguns posts de exemplo.
 
-Depois de duplicar, abra a database e confira se os posts exemplo apareceram. Você pode apagar, editar ou manter esses posts enquanto testa.
+Depois de duplicar, você vai ver uma página chamada `Blog Notion Template`. Essa página é um painel visual: ela tem botão, navegação e várias views.
+
+Dentro dela existe a database real dos posts, chamada `Blog Content Management`. É essa database que o site vai ler pela API.
+
+Pense assim:
+
+| Nome | O que é | Para que serve |
+| --- | --- | --- |
+| `Blog Notion Template` | Página/painel | Serve para você navegar e organizar o template no Notion |
+| `Blog Content Management` | Database dos posts | Serve para o site buscar os posts no build |
+
+Essa diferença é importante porque, mais adiante, a Vercel vai pedir `NOTION_BLOG_DATABASE_ID`. Esse valor precisa ser o ID de `Blog Content Management`, não o ID da página `Blog Notion Template`.
 
 ## Entender a database
 
@@ -103,19 +114,40 @@ Na página da sua connection, abra a aba `Content access`.
 
 Clique em `Edit access`.
 
-Selecione a página ou database duplicada do template. Na dúvida, selecione a página principal `Blog Notion Template`, porque ela contém a database usada pelo blog.
+Selecione a página principal `Blog Notion Template`. Se o Notion mostrar a database `Blog Content Management` separadamente, selecione ela também.
 
 Salve.
 
-Depois de salvar, a aba `Content access` não pode ficar vazia. Ela precisa mostrar a página ou database liberada. Se essa etapa ficar vazia, o site não consegue ler seus posts, mesmo que o token esteja correto.
+Depois de salvar, a aba `Content access` não pode ficar vazia. Ela precisa mostrar `Blog Notion Template`, `Blog Content Management` ou os dois. Se essa etapa ficar vazia, o site não consegue ler seus posts, mesmo que o token esteja correto.
 
 ## Copiar o ID da database
 
-Abra a database duplicada no Notion. Você precisa pegar o ID da database real, não o ID da página dashboard.
+Agora vem uma etapa fácil de errar: você precisa pegar o ID da database real, não o ID da página/painel.
 
-No template, existe uma página principal chamada `Blog Notion Template` e uma database chamada `Blog Content Management`. O valor de `NOTION_BLOG_DATABASE_ID` precisa ser o ID da database `Blog Content Management`.
+O valor de `NOTION_BLOG_DATABASE_ID` precisa ser o ID de `Blog Content Management`.
 
-O jeito mais seguro é clicar em `Blog Content Management` na sidebar do Notion, abrir essa database como página inteira e copiar a URL do navegador. A URL vai ter uma sequência grande de letras e números. Essa sequência é o ID da database.
+Não use o ID de `Blog Notion Template`.
+
+Para copiar o ID certo:
+
+1. No menu lateral do Notion, clique em `Blog Content Management`.
+2. Se ele abrir como uma view pequena, abra como página inteira.
+3. Copie a URL do navegador ou use `Copy link`.
+4. Pegue a sequência grande de letras e números dessa URL.
+
+Se a URL tiver `?v=`, use o ID que vem antes de `?v=`. O valor depois de `?v=` é o ID da view, não da database.
+
+Exemplo:
+
+```txt
+https://www.notion.so/2dfd76f2b52383c690cb01b9164f0ff7?v=48ad76f2b52383d29bf3887c4474f1fd
+```
+
+Neste exemplo, o `NOTION_BLOG_DATABASE_ID` é:
+
+```txt
+2dfd76f2b52383c690cb01b9164f0ff7
+```
 
 Você usará esse valor como `NOTION_BLOG_DATABASE_ID`.
 

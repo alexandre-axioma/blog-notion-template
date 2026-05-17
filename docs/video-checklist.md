@@ -25,8 +25,8 @@ Use este checklist para gravar o passo a passo do zero até o blog automático.
 - Criar uma Notion integration.
 - Copiar `NOTION_TOKEN`.
 - Abrir `Content access`.
-- Usar `Edit access` para liberar a database duplicada.
-- Copiar `NOTION_BLOG_DATABASE_ID`.
+- Usar `Edit access` para liberar `Blog Notion Template` e, se aparecer, `Blog Content Management`.
+- Copiar `NOTION_BLOG_DATABASE_ID` da database `Blog Content Management`, não da página `Blog Notion Template`.
 - Importar repo na Vercel.
 - Configurar env vars obrigatórias.
 - Fazer o primeiro deploy.
