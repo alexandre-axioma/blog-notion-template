@@ -1,7 +1,8 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { Client } from "@notionhq/client";
+import { getSiteUrl } from "../src/lib/site-url";
 
-const siteUrl = (process.env.PUBLIC_SITE_URL ?? "https://seu-blog.vercel.app").replace(/\/$/, "");
+const siteUrl = getSiteUrl();
 const publishedStatuses = new Set(["published", "publicado", "publish"]);
 const scheduledStatuses = new Set(["scheduled", "programado"]);
 

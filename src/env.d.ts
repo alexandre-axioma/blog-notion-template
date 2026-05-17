@@ -3,6 +3,8 @@
 
 interface ImportMetaEnv {
   readonly PUBLIC_SITE_URL?: string;
+  readonly VERCEL_PROJECT_PRODUCTION_URL?: string;
+  readonly VERCEL_URL?: string;
   readonly NOTION_TOKEN?: string;
   readonly NOTION_BLOG_DATABASE_ID?: string;
   readonly VERCEL_DEPLOY_HOOK_URL?: string;

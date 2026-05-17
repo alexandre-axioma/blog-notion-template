@@ -2,6 +2,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import crypto from "node:crypto";
 import { escapeAttribute, escapeHtml, safeUrl } from "./helpers";
+import { getSiteUrl } from "../site-url";
 
 const OG_CACHE_DIR = path.join(process.cwd(), ".notion-cache", "og");
 const FETCH_TIMEOUT_MS = 5000;
@@ -158,7 +159,7 @@ async function fetchOgData(url: string): Promise<OgData> {
       redirect: "follow",
       headers: {
         "User-Agent":
-          `Mozilla/5.0 (compatible; NotionAstroBlogStarter/1.0; +${process.env.PUBLIC_SITE_URL ?? "https://seu-blog.vercel.app"})`,
+          `Mozilla/5.0 (compatible; NotionAstroBlogStarter/1.0; +${getSiteUrl()})`,
         Accept: "text/html,application/xhtml+xml",
       },
     });
