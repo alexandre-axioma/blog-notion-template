@@ -30,6 +30,7 @@ Use este checklist para gravar o passo a passo do zero até o blog automático.
 - Opcional: ligar `Update content` na integration para SEO audit.
 - Opcional: gerar/anotar `SEO_AUDIT_SECRET` em `https://bitwarden.com/password-generator/`.
 - Opcional: criar/anotar `PAGESPEED_API_KEY` em `https://console.cloud.google.com/apis/library/pagespeedonline.googleapis.com`.
+- Na chave do PageSpeed: `Create credentials` -> `API key`, restrição de API `PageSpeed Insights API`, `Application restrictions` como `None`.
 - Importar repo na Vercel.
 - Configurar env vars já disponíveis.
 - Fazer o primeiro deploy.

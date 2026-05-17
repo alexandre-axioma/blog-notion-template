@@ -198,17 +198,26 @@ https://console.cloud.google.com/apis/library/pagespeedonline.googleapis.com
 
 2. Escolha ou crie um projeto.
 3. Clique em `Enable`.
-4. Abra a página de credenciais:
+4. Depois de habilitar, abra a página de credenciais:
 
 https://console.cloud.google.com/apis/credentials
 
 5. Clique em `Create credentials`.
 6. Escolha `API key`.
-7. Copie a chave e anote como:
+7. No painel que abrir, dê um nome para a chave, por exemplo `Blog`.
+8. Em `Select API restrictions`, selecione `PageSpeed Insights API`.
+9. Em `Application restrictions`, deixe `None`.
+
+Essa chave vai ficar salva na Vercel como environment variable e será usada pelo backend do seu site, não pelo navegador. Por isso o caminho mais simples é não restringir por website. A restrição importante aqui é limitar a chave à `PageSpeed Insights API`.
+
+10. Clique em `Create`.
+11. O Google vai mostrar a chave criada. Copie a chave e anote como:
 
 ```env
 PAGESPEED_API_KEY=sua_chave_do_pagespeed
 ```
+
+Se você fechar a janela sem copiar, volte em `Credentials`, clique na chave criada e use o botão de copiar.
 
 Essa chave é opcional. Se você não criar, deixe `PAGESPEED_API_KEY` vazio e teste assim primeiro.
 
