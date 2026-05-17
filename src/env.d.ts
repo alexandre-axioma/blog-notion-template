@@ -2,7 +2,6 @@
 /// <reference types="astro/client" />
 
 interface ImportMetaEnv {
-  readonly PUBLIC_SITE_URL?: string;
   readonly VERCEL_PROJECT_PRODUCTION_URL?: string;
   readonly VERCEL_URL?: string;
   readonly NOTION_TOKEN?: string;

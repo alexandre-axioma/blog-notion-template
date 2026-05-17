@@ -138,13 +138,7 @@ A Vercel deve detectar o framework `Astro`. Antes do primeiro deploy, adicione e
 | `NOTION_TOKEN` | O access token da sua Notion integration |
 | `NOTION_BLOG_DATABASE_ID` | O ID da sua database duplicada |
 
-Você não precisa configurar `PUBLIC_SITE_URL` para o primeiro deploy. A Vercel gera uma URL automaticamente, e o projeto tenta usar essa URL nas partes que precisam de endereço absoluto.
-
-Se você colocar um domínio próprio depois, ou se quiser forçar uma URL canônica específica, adicione também:
-
-| Nome | Valor |
-| --- | --- |
-| `PUBLIC_SITE_URL` | A URL final do seu blog, como `https://blog.seudominio.com` |
+A Vercel gera a URL do projeto automaticamente, e o template usa essa URL nas partes que precisam de endereço absoluto.
 
 Faça o deploy.
 

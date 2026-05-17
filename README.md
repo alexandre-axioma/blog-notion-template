@@ -46,8 +46,6 @@ NOTION_WEBHOOK_VERIFICATION_TOKEN=token_que_apareceu_no_log
 
 `VERCEL_DEPLOY_HOOK_URL` e `NOTION_WEBHOOK_VERIFICATION_TOKEN` entram depois do primeiro deploy, quando você configurar o deploy hook da Vercel e o webhook do Notion.
 
-`PUBLIC_SITE_URL` é opcional. A Vercel normalmente expõe a URL do projeto automaticamente. Configure `PUBLIC_SITE_URL` apenas se você usar um domínio próprio ou quiser forçar uma URL canônica específica.
-
 ## Notion integration
 
 Crie uma connection em:
