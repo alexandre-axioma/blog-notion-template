@@ -70,6 +70,8 @@ SEO_AUDIT_SECRET=o_mesmo_valor_da_vercel
 SEO_AUDIT_URL=https://seu-blog.vercel.app/api/seo-audit
 ```
 
+Se a aba `Actions` mostrar `Get started with GitHub Actions`, o arquivo `.github/workflows/seo-audit.yml` não está no seu repositório. Isso normalmente significa que o repo foi criado antes dessa atualização do template. Crie um repo novo a partir do template atualizado ou adicione esse arquivo manualmente.
+
 Estas duas variáveis só existem depois que o projeto já foi criado na Vercel:
 
 ```env

@@ -472,6 +472,52 @@ Se funcionar, a resposta mostra quantos posts foram auditados, e a propriedade `
 
 O jeito automático usa o GitHub Action que já vem no template em `.github/workflows/seo-audit.yml`.
 
+Antes de criar os secrets, confirme se esse arquivo existe no seu repositório.
+
+No GitHub, abra a aba `Code` e procure por:
+
+```txt
+.github/workflows/seo-audit.yml
+```
+
+Se esse arquivo existe, a aba `Actions` deve mostrar o workflow `SEO audit`.
+
+Se a aba `Actions` mostrar a tela `Get started with GitHub Actions`, o workflow não está no seu repositório. Isso normalmente acontece quando o repositório foi criado antes de o template receber o arquivo de SEO. Nesse caso, faça uma destas duas coisas:
+
+- crie um novo repositório a partir do template atualizado; ou
+- adicione manualmente o arquivo `.github/workflows/seo-audit.yml` no seu repositório atual.
+
+O conteúdo do arquivo é:
+
+```yml
+name: SEO audit
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "*/15 * * * *"
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Run SEO audit endpoint
+        env:
+          SEO_AUDIT_URL: ${{ secrets.SEO_AUDIT_URL }}
+          SEO_AUDIT_SECRET: ${{ secrets.SEO_AUDIT_SECRET }}
+        run: |
+          if [ -z "$SEO_AUDIT_URL" ] || [ -z "$SEO_AUDIT_SECRET" ]; then
+            echo "SEO audit secrets are missing. Skipping."
+            exit 0
+          fi
+
+          curl --fail --request POST \
+            --header "Authorization: Bearer $SEO_AUDIT_SECRET" \
+            "$SEO_AUDIT_URL"
+```
+
+Depois de adicionar esse arquivo, faça commit na branch principal. A aba `Actions` passa a mostrar o workflow.
+
 Para ativar:
 
 1. Abra o repositório do seu blog no GitHub.
