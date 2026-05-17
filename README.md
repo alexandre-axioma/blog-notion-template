@@ -95,6 +95,7 @@ Depois do primeiro deploy na Vercel:
 8. Copie o verification token dos logs da Vercel.
 9. Salve em `NOTION_WEBHOOK_VERIFICATION_TOKEN`.
 10. Faça redeploy.
+11. Volte no Notion, clique em `Verify`, cole o mesmo token e confirme.
 
 Este starter ignora `page.content_updated` para evitar deploy em todo autosave do Notion. Para publicar atualizações, altere uma propriedade relevante, como `Status`, `Slug`, `Categoria`, `Tags` ou `Data de Publicação`.
 

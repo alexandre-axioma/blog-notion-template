@@ -43,6 +43,7 @@ Use este checklist para gravar o passo a passo do zero até o blog automático.
 - Copiar `verification_token` dos logs da Vercel.
 - Salvar `NOTION_WEBHOOK_VERIFICATION_TOKEN`.
 - Fazer redeploy.
+- Voltar no Notion, clicar `Verify`, colar o token e confirmar.
 - Publicar um post de teste pelo Notion.
 
 ## Extra

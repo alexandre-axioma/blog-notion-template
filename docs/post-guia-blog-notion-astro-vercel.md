@@ -316,11 +316,21 @@ Deixe desmarcado:
 | `Comment` | Comentários não fazem parte da publicação do blog |
 | `File upload`, se aparecer | Não é usado pelo webhook do template |
 
-O grupo `Page` pode ficar parcialmente marcado. Isso é normal.
+O grupo `Page` pode ficar parcialmente marcado, mostrando algo como `3/8 events`. Isso é normal.
 
-Durante a configuração, o Notion envia um token de verificação para essa rota. O código do template já responde corretamente e também registra esse token nos logs da função na Vercel.
+Clique em `Create subscription`.
 
-Na Vercel, abra os logs da função ou do deployment e procure uma linha parecida com `Notion webhook verification token`. Copie o token.
+Depois de criar a subscription, o Notion vai mostrar um aviso dizendo que você precisa verificar o endpoint. Isso também é normal.
+
+Durante a criação, o Notion envia um token de verificação para a rota do webhook. O código do template já responde corretamente e também registra esse token nos logs da função na Vercel.
+
+Na Vercel, abra os logs da função ou do deployment e procure uma linha parecida com:
+
+```txt
+Notion webhook verification token: ...
+```
+
+Copie o token que aparece depois dos dois pontos.
 
 Depois adicione mais uma environment variable na Vercel:
 
@@ -330,7 +340,15 @@ Depois adicione mais uma environment variable na Vercel:
 
 Faça redeploy.
 
-Depois disso, o webhook já deve estar pronto para validar as chamadas do Notion.
+Depois do redeploy, volte na aba `Webhooks` da sua connection do Notion.
+
+Clique em `Verify`.
+
+Cole o mesmo token de verificação.
+
+Confirme a verificação.
+
+Depois disso, o webhook fica ativo para receber os eventos do Notion.
 
 ## Testar publicação automática
 
