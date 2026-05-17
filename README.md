@@ -16,10 +16,12 @@ Você não precisa clonar o projeto nem rodar terminal para publicar o blog pela
 2. Duplicar o template do Notion.
 3. Criar uma Notion integration.
 4. Liberar acesso à database em `Content access`.
-5. Importar o repo na Vercel.
-6. Configurar as environment variables.
-7. Criar deploy hook e webhook.
-8. Testar criando um post no Notion.
+5. Anotar as environment variables que já existem.
+6. Opcional: preparar SEO audit.
+7. Importar o repo na Vercel.
+8. Configurar as environment variables.
+9. Criar deploy hook e webhook.
+10. Testar criando um post no Notion.
 
 Use o clone local apenas quando quiser customizar UI, UX ou código.
 
@@ -33,20 +35,30 @@ Notion template:
 
 https://fixed-sushi-1bf.notion.site/Blog-Notion-Template-f1d13d4a408c8285a99c01101e736767?pvs=74
 
-## Variáveis obrigatórias
+## Variáveis
 
-Configure na Vercel:
+Você consegue preparar estas variáveis antes de criar o projeto na Vercel:
 
 ```env
 NOTION_TOKEN=cole_a_chave_da_integration_do_notion
 NOTION_BLOG_DATABASE_ID=id_da_sua_database
+```
+
+Use em `NOTION_BLOG_DATABASE_ID` o ID da database `Blog Content Management`, não o ID da página/painel `Blog Notion Template`.
+
+Se quiser ativar SEO audit desde o começo, prepare também:
+
+```env
+SEO_AUDIT_SECRET=um_texto_secreto_forte
+PAGESPEED_API_KEY=sua_chave_do_pagespeed_ou_vazio
+```
+
+Estas duas variáveis só existem depois que o projeto já foi criado na Vercel:
+
+```env
 VERCEL_DEPLOY_HOOK_URL=https://api.vercel.com/v1/integrations/deploy/...
 NOTION_WEBHOOK_VERIFICATION_TOKEN=token_que_apareceu_no_log
 ```
-
-`VERCEL_DEPLOY_HOOK_URL` e `NOTION_WEBHOOK_VERIFICATION_TOKEN` entram depois do primeiro deploy, quando você configurar o deploy hook da Vercel e o webhook do Notion.
-
-Use em `NOTION_BLOG_DATABASE_ID` o ID da database `Blog Content Management`, não o ID da página/painel `Blog Notion Template`.
 
 ## Notion integration
 
@@ -112,7 +124,7 @@ src/styles/global.css
 
 ## SEO automático opcional
 
-Existe uma rota opcional em `/api/seo-audit`. Para ativar, ligue `Update content` na Notion integration e configure:
+Existe uma rota opcional em `/api/seo-audit`. Para ativar, ligue `Update content` na Notion integration antes de criar o projeto na Vercel e configure:
 
 ```env
 SEO_AUDIT_SECRET=um_texto_secreto_forte

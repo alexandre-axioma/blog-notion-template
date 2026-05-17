@@ -27,10 +27,14 @@ Use este checklist para gravar o passo a passo do zero até o blog automático.
 - Abrir `Content access`.
 - Usar `Edit access` para liberar `Blog Notion Template` e, se aparecer, `Blog Content Management`.
 - Copiar `NOTION_BLOG_DATABASE_ID` da database `Blog Content Management`, não da página `Blog Notion Template`.
+- Opcional: ligar `Update content` na integration para SEO audit.
+- Opcional: criar/anotar `SEO_AUDIT_SECRET`.
+- Opcional: criar/anotar `PAGESPEED_API_KEY`.
 - Importar repo na Vercel.
-- Configurar env vars obrigatórias.
+- Configurar env vars já disponíveis.
 - Fazer o primeiro deploy.
 - Criar Vercel deploy hook.
+- Salvar `VERCEL_DEPLOY_HOOK_URL`.
 - Criar Notion webhook.
 - Copiar `verification_token` dos logs da Vercel.
 - Salvar `NOTION_WEBHOOK_VERIFICATION_TOKEN`.
@@ -39,4 +43,4 @@ Use este checklist para gravar o passo a passo do zero até o blog automático.
 
 ## Extra
 
-- Ativar SEO audit apenas depois do fluxo principal funcionar.
+- Rodar SEO audit apenas depois do fluxo principal funcionar.

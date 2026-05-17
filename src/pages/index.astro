@@ -146,17 +146,12 @@ function readingMinutes(words: number | null): number {
   return Math.max(1, Math.round(words / 220));
 }
 
-/** Picsum como fallback quando o post não tem Hero/Thumb setados no Notion. */
-function picsumImage(slug: string, big = false): string {
-  return `https://picsum.photos/seed/${slug}/${big ? "1200/1600" : "900/700"}`;
+function heroImageFor(post: { heroImage?: string | null }): string {
+  return post.heroImage ?? "/static/images/post-placeholder.svg";
 }
 
-function heroImageFor(post: { slug: string; heroImage?: string | null }): string {
-  return post.heroImage ?? picsumImage(post.slug, true);
-}
-
-function thumbImageFor(post: { slug: string; thumbImage?: string | null }): string {
-  return post.thumbImage ?? picsumImage(post.slug, false);
+function thumbImageFor(post: { thumbImage?: string | null }): string {
+  return post.thumbImage ?? "/static/images/post-placeholder.svg";
 }
 
 function extractBodyText(html: string | null | undefined, maxWords = 90): string[] {

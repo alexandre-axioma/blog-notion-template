@@ -14,6 +14,8 @@ O caminho principal não exige clonar o projeto, instalar dependências ou rodar
 
 Para publicar o blog do jeito mais simples, o fluxo é: duplicar o template no GitHub, duplicar o template no Notion, criar uma integration no Notion, importar o repo na Vercel, preencher as environment variables e configurar o webhook para o deploy automático.
 
+Algumas variáveis você consegue preparar antes de abrir a Vercel. Outras só existem depois que o projeto já foi criado na Vercel, como o deploy hook e o token de verificação do webhook. Então o processo tem duas rodadas de configuração: primeiro você prepara Notion e opcionais; depois cria o projeto na Vercel e completa as variáveis que dependem da própria Vercel.
+
 ## Contas necessárias
 
 Você precisa ter uma conta no GitHub, uma conta na Vercel e uma conta no Notion. Se você ainda não tem uma delas, crie antes de começar.
@@ -153,6 +155,44 @@ Você usará esse valor como `NOTION_BLOG_DATABASE_ID`.
 
 Pode colar o ID com ou sem hífens. O código normaliza isso.
 
+## Preparar envs antes da Vercel
+
+Antes de criar o projeto na Vercel, você já consegue separar estes valores:
+
+| Nome | Valor |
+| --- | --- |
+| `NOTION_TOKEN` | O access token da sua Notion integration |
+| `NOTION_BLOG_DATABASE_ID` | O ID da database `Blog Content Management` |
+
+Anote esses dois valores. Você vai colar na Vercel durante a criação do projeto.
+
+## SEO opcional antes da Vercel
+
+Se você não quer ativar auditoria automática de SEO agora, pule esta seção e vá direto para a Vercel.
+
+Se quiser deixar o SEO pronto desde o começo, faça duas coisas.
+
+Primeiro, volte na sua Notion integration e ligue `Update content`, porque o SEO audit precisa escrever o valor em `SEO Score` na database.
+
+Depois, escolha um segredo para proteger a rota de auditoria. Pode ser uma frase longa, aleatória, que só você sabe. Você vai usar esse valor como:
+
+```env
+SEO_AUDIT_SECRET=um_texto_secreto_forte
+```
+
+O PageSpeed API key é opcional para baixo volume. Se quiser criar uma chave, use o Google Cloud/PageSpeed Insights e anote:
+
+```env
+PAGESPEED_API_KEY=sua_chave_do_pagespeed
+```
+
+Então, se você quiser SEO desde o primeiro deploy, já separe também:
+
+| Nome | Valor |
+| --- | --- |
+| `SEO_AUDIT_SECRET` | Um segredo forte criado por você |
+| `PAGESPEED_API_KEY` | Opcional; pode deixar vazio |
+
 ## Publicar na Vercel
 
 Agora vamos colocar o blog no ar.
@@ -165,18 +205,27 @@ Clique em `Add New` e depois em `Project`.
 
 Importe o repositório que você criou a partir do template do GitHub.
 
-A Vercel deve detectar o framework `Astro`. Antes do primeiro deploy, adicione estas environment variables:
+A Vercel deve detectar o framework `Astro`. Antes do primeiro deploy, adicione as environment variables que você já preparou:
 
 | Nome | Valor |
 | --- | --- |
 | `NOTION_TOKEN` | O access token da sua Notion integration |
-| `NOTION_BLOG_DATABASE_ID` | O ID da sua database duplicada |
+| `NOTION_BLOG_DATABASE_ID` | O ID da database `Blog Content Management` |
+| `SEO_AUDIT_SECRET` | Opcional; só se você decidiu ativar SEO |
+| `PAGESPEED_API_KEY` | Opcional; só se você criou uma chave |
 
 A Vercel gera a URL do projeto automaticamente, e o template usa essa URL nas partes que precisam de endereço absoluto.
 
 Faça o deploy.
 
 Quando terminar, abra a URL pública do projeto e confirme se os posts `Publicado` aparecem no blog.
+
+Agora que o projeto existe na Vercel, você consegue criar as duas variáveis que faltam para a publicação automática:
+
+| Nome | Quando você consegue criar |
+| --- | --- |
+| `VERCEL_DEPLOY_HOOK_URL` | Depois que o projeto existe na Vercel |
+| `NOTION_WEBHOOK_VERIFICATION_TOKEN` | Depois de criar o webhook no Notion e olhar os logs da Vercel |
 
 ## Criar o deploy hook da Vercel
 
@@ -293,20 +342,11 @@ Não altere api/notion-webhook.ts nem src/lib/notion sem necessidade.
 Adapte a home, a página de post e o CSS global.
 ```
 
-## SEO automático opcional
+## Rodar SEO audit
 
-O starter também tem uma rota opcional para rodar PageSpeed Insights e gravar o resultado no Notion.
+Se você ativou o SEO opcional, a rota para rodar a auditoria é:
 
-Isso não é necessário para o blog funcionar.
-
-Se quiser ativar depois, volte na integration do Notion e ligue `Update content`. Depois configure na Vercel:
-
-```env
-SEO_AUDIT_SECRET=um_texto_secreto_forte
-PAGESPEED_API_KEY=sua_chave_do_pagespeed_ou_vazio
-```
-
-Depois chame:
+Depois que o site estiver no ar, chame:
 
 ```bash
 curl --request POST \
