@@ -17,7 +17,13 @@ Notion -> Notion webhook -> Vercel deploy hook -> Astro build -> blog publicado
 
 ## 1. Duplicar o template do Notion
 
-Duplique a database usada como modelo para o blog. Ela precisa ter estas propriedades:
+Abra e duplique o template do Notion:
+
+```txt
+https://fixed-sushi-1bf.notion.site/Blog-Notion-Template-f1d13d4a408c8285a99c01101e736767?pvs=74
+```
+
+Depois de duplicar, a database precisa manter estas propriedades:
 
 | Propriedade | Tipo | Obrigatória |
 | --- | --- | --- |

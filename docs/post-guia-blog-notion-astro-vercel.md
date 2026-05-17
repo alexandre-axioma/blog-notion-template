@@ -65,7 +65,7 @@ npm install
 Abra o template da database do Notion:
 
 ```txt
-COLE_AQUI_O_LINK_DO_TEMPLATE_DO_NOTION
+https://fixed-sushi-1bf.notion.site/Blog-Notion-Template-f1d13d4a408c8285a99c01101e736767?pvs=74
 ```
 
 Clique em `Duplicate` para copiar a database para sua própria workspace.
