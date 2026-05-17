@@ -292,6 +292,32 @@ Clique para criar uma nova subscription.
 
 Cole a URL do webhook do seu site.
 
+Em `API version`, deixe a versão mais recente que o Notion mostrar.
+
+Em `Select the events to listen to`, não deixe todos os eventos marcados.
+
+Expanda `Page` e marque apenas:
+
+| Evento | Por que marcar |
+| --- | --- |
+| `page.created` | Quando um post novo é criado na database |
+| `page.properties_updated` | Quando você muda `Status`, `Slug`, `Categoria`, `Tags` ou `Data de Publicação` |
+| `page.deleted` | Quando um post é enviado para a lixeira |
+
+Deixe desmarcado:
+
+| Grupo ou evento | Por que desmarcar |
+| --- | --- |
+| `page.content_updated` | O template ignora mudanças no corpo do post para não fazer deploy a cada autosave do Notion |
+| Outros eventos de `Page` | Não são necessários para publicar o blog |
+| `Database` | Não é usado pelo webhook do template |
+| `Data source` | Não é usado pelo webhook do template |
+| `View` | Mudanças de visualização do Notion não devem rebuildar o blog |
+| `Comment` | Comentários não fazem parte da publicação do blog |
+| `File upload`, se aparecer | Não é usado pelo webhook do template |
+
+O grupo `Page` pode ficar parcialmente marcado. Isso é normal.
+
 Durante a configuração, o Notion envia um token de verificação para essa rota. O código do template já responde corretamente e também registra esse token nos logs da função na Vercel.
 
 Na Vercel, abra os logs da função ou do deployment e procure uma linha parecida com `Notion webhook verification token`. Copie o token.

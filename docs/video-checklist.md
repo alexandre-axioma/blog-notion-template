@@ -38,6 +38,8 @@ Use este checklist para gravar o passo a passo do zero até o blog automático.
 - Criar Vercel deploy hook.
 - Salvar `VERCEL_DEPLOY_HOOK_URL`.
 - Criar Notion webhook usando `URL_DO_BLOG/api/notion-webhook`.
+- No webhook, marcar apenas `page.created`, `page.properties_updated` e `page.deleted`.
+- Desmarcar `page.content_updated`, `Database`, `Data source`, `View`, `Comment` e outros grupos.
 - Copiar `verification_token` dos logs da Vercel.
 - Salvar `NOTION_WEBHOOK_VERIFICATION_TOKEN`.
 - Fazer redeploy.
