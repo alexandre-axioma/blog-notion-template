@@ -167,16 +167,11 @@ function isBlogPage(page: any): boolean {
   const parentIds = [
     page?.parent?.database_id,
     page?.parent?.data_source_id,
-    page?.parent?.id,
   ]
     .filter(Boolean)
     .map((value) => normalizeId(String(value)));
 
-  if (databaseId && parentIds.includes(databaseId)) {
-    return true;
-  }
-
-  return hasBlogProperties(page.properties ?? {});
+  return Boolean(databaseId && parentIds.includes(databaseId));
 }
 
 function isValidSignature(body: string, signature: string, verificationToken: string): boolean {
@@ -201,14 +196,6 @@ function getProperty(pageProperties: Record<string, any>, names: string[]): any 
   }
 
   return null;
-}
-
-function hasBlogProperties(pageProperties: Record<string, any>): boolean {
-  return Boolean(
-    getProperty(pageProperties, statusPropertyNames) &&
-    getProperty(pageProperties, ["Slug"]) &&
-    getProperty(pageProperties, ["Titulo", "Título", "Title", "Name"])
-  );
 }
 
 function shouldPublishPage(pageProperties: Record<string, any>): boolean {
