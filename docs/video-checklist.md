@@ -20,12 +20,13 @@ Use este checklist para gravar o passo a passo do zero até o blog automático.
 
 ## Instalação
 
+- Criar repo a partir do GitHub template.
 - Duplicar o template do Notion.
 - Criar uma Notion integration.
-- Conectar a integration na database.
 - Copiar `NOTION_TOKEN`.
+- Abrir `Content access`.
+- Usar `Edit access` para liberar a database duplicada.
 - Copiar `NOTION_BLOG_DATABASE_ID`.
-- Criar repo a partir do GitHub template.
 - Importar repo na Vercel.
 - Configurar env vars obrigatórias.
 - Fazer o primeiro deploy.
