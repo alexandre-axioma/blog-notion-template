@@ -48,7 +48,7 @@ Use este checklist para gravar o passo a passo do zero até o blog automático.
 - Publicar um post de teste pelo Notion.
 - Opcional: para SEO automático, criar no GitHub Actions os repository secrets `SEO_AUDIT_SECRET` e `SEO_AUDIT_URL`.
 - Opcional: rodar o workflow `SEO audit` manualmente uma vez.
-- Opcional: explicar que o workflow roda a cada 15 minutos e preenche `SEO Score` apenas em posts publicados que ainda estão sem score.
+- Opcional: explicar que o workflow roda a cada 15 minutos e recalcula `SEO Score` dos posts publicados para evitar score antigo.
 
 ## Extra
 

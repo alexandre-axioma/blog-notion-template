@@ -490,11 +490,13 @@ Depois vá na aba `Actions`, abra o workflow `SEO audit` e clique em `Run workfl
 
 Depois disso, o GitHub também roda esse workflow automaticamente a cada 15 minutos.
 
-Na prática, quando você publica um post, o webhook do Notion faz a Vercel rebuildar o blog. Depois que o post já está publicado no site, o workflow de SEO chama `/api/seo-audit`, mede os posts publicados que ainda estão sem `SEO Score` e escreve a nota no Notion.
+Na prática, quando você publica um post, o webhook do Notion faz a Vercel rebuildar o blog. Depois que o post já está publicado no site, o workflow de SEO chama `/api/seo-audit`, mede os posts publicados e escreve a nota em `SEO Score` no Notion.
 
 Não é instantâneo no mesmo segundo do publish, porque a página precisa existir publicamente antes da auditoria. Mas, com o workflow ativo, o score deve aparecer no Notion pouco depois da publicação.
 
-O template não recalcula posts que já têm `SEO Score` em toda execução. Isso evita gastar chamadas do PageSpeed sem necessidade. Se você quiser recalcular um post, apague o valor de `SEO Score` no Notion e rode o workflow de novo.
+O template recalcula os posts publicados quando o workflow roda. Isso evita score antigo depois que você atualiza um post. Para blogs pequenos, esse é o caminho mais simples e confiável.
+
+Não usamos `Última Modificação` para decidir isso porque a própria auditoria escreve `SEO Score` no Notion, e essa escrita também muda `Última Modificação`.
 
 ## Problemas comuns
 

@@ -63,7 +63,7 @@ https://console.cloud.google.com/apis/library/pagespeedonline.googleapis.com
 
 Depois de habilitar a API, vá em `Credentials` -> `Create credentials` -> `API key`. Nomeie a chave, selecione `PageSpeed Insights API` em `Select API restrictions`, deixe `Application restrictions` como `None`, clique em `Create` e copie a chave para `PAGESPEED_API_KEY`.
 
-Para rodar o SEO audit automaticamente depois que posts forem publicados, o template já inclui `.github/workflows/seo-audit.yml`. Esse workflow roda a cada 15 minutos e também pode ser iniciado manualmente. Ele audita posts publicados que ainda estão sem `SEO Score`; para recalcular um post, apague o valor de `SEO Score` no Notion e rode o workflow de novo. Depois do deploy, crie dois repository secrets no GitHub Actions:
+Para rodar o SEO audit automaticamente depois que posts forem publicados, o template já inclui `.github/workflows/seo-audit.yml`. Esse workflow roda a cada 15 minutos e também pode ser iniciado manualmente. Ele recalcula os posts publicados para evitar score antigo quando você atualiza um post. Depois do deploy, crie dois repository secrets no GitHub Actions:
 
 ```env
 SEO_AUDIT_SECRET=o_mesmo_valor_da_vercel
