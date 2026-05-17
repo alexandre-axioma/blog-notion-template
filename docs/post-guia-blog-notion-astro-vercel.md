@@ -103,17 +103,19 @@ Na página da sua connection, abra a aba `Content access`.
 
 Clique em `Edit access`.
 
-Selecione a página ou database duplicada do template, por exemplo `Blog Notion Template` ou `Blog Content Management`.
+Selecione a página ou database duplicada do template. Na dúvida, selecione a página principal `Blog Notion Template`, porque ela contém a database usada pelo blog.
 
 Salve.
 
-Se essa etapa ficar vazia, o site não consegue ler seus posts, mesmo que o token esteja correto.
+Depois de salvar, a aba `Content access` não pode ficar vazia. Ela precisa mostrar a página ou database liberada. Se essa etapa ficar vazia, o site não consegue ler seus posts, mesmo que o token esteja correto.
 
 ## Copiar o ID da database
 
-Abra a database duplicada no Notion. Você precisa pegar o ID dela para colocar na Vercel.
+Abra a database duplicada no Notion. Você precisa pegar o ID da database real, não o ID da página dashboard.
 
-O jeito mais simples é abrir a database como página inteira e copiar a URL do navegador. A URL vai ter uma sequência grande de letras e números. Essa sequência é o ID da database.
+No template, existe uma página principal chamada `Blog Notion Template` e uma database chamada `Blog Content Management`. O valor de `NOTION_BLOG_DATABASE_ID` precisa ser o ID da database `Blog Content Management`.
+
+O jeito mais seguro é clicar em `Blog Content Management` na sidebar do Notion, abrir essa database como página inteira e copiar a URL do navegador. A URL vai ter uma sequência grande de letras e números. Essa sequência é o ID da database.
 
 Você usará esse valor como `NOTION_BLOG_DATABASE_ID`.
 
@@ -304,6 +306,11 @@ Os erros mais comuns são:
 - database sem permissão para a integration
 - propriedade do Notion com nome diferente
 - imagem ou arquivo do Notion inacessível
+
+Se o log mostrar `object_not_found` ou `Could not find database with ID`, o problema quase sempre é um destes dois:
+
+- a aba `Content access` da Notion integration ainda está vazia ou não inclui a página/database duplicada
+- `NOTION_BLOG_DATABASE_ID` foi copiado da página `Blog Notion Template`, mas precisa ser copiado da database `Blog Content Management`
 
 ### O webhook não dispara deploy
 

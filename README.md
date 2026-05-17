@@ -61,7 +61,9 @@ Capabilities recomendadas para o fluxo principal:
 - `Insert content`: desligado
 - `No user information`: selecionado
 
-Depois vá em `Content access`, clique em `Edit access` e selecione a página/database duplicada do template. Sem essa etapa, o build não consegue ler os posts.
+Depois vá em `Content access`, clique em `Edit access` e selecione a página principal duplicada, `Blog Notion Template`, ou a database `Blog Content Management`. Sem essa etapa, o build não consegue ler os posts.
+
+Use em `NOTION_BLOG_DATABASE_ID` o ID da database `Blog Content Management`, não o ID da página dashboard `Blog Notion Template`.
 
 ## Publicação automática
 

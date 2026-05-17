@@ -66,7 +66,9 @@ export async function getPublishedPosts(): Promise<BlogPost[]> {
         page_size: 100,
       }),
     "databases.query",
-  );
+  ).catch((error) => {
+    throw explainNotionDatabaseError(error);
+  });
 
   const publishedPages = pages.results.filter((page: any) =>
     shouldPublishPage(page.properties ?? {})
@@ -87,6 +89,21 @@ export async function getAllPostPaths() {
     params: { slug: post.slug },
     props: { post },
   }));
+}
+
+function explainNotionDatabaseError(error: any): Error {
+  if (error?.code === "object_not_found") {
+    return new Error(
+      [
+        `Could not read the Notion database "${databaseId}".`,
+        "Check two things:",
+        '1. In your Notion integration, open Content access -> Edit access and select the duplicated "Blog Notion Template" page or the "Blog Content Management" database.',
+        '2. In Vercel, NOTION_BLOG_DATABASE_ID must be the ID of the "Blog Content Management" database, not the dashboard page.',
+      ].join("\n"),
+    );
+  }
+
+  return error instanceof Error ? error : new Error(String(error));
 }
 
 async function pageToPost(page: any): Promise<BlogPost> {
