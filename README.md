@@ -96,6 +96,10 @@ Capabilities recomendadas para o fluxo principal:
 
 Depois vá em `Content access`, clique em `Edit access` e selecione a página principal duplicada, `Blog Notion Template`. Se o Notion mostrar a database `Blog Content Management` separadamente, selecione ela também. Sem essa etapa, o build não consegue ler os posts.
 
+Se fechar a tela, volte para suas connections em:
+
+https://www.notion.so/profile/integrations
+
 No template, `Blog Notion Template` é a página/painel visual. `Blog Content Management` é a database real dos posts. O código consulta a database, então o ID usado em `NOTION_BLOG_DATABASE_ID` precisa vir de `Blog Content Management`.
 
 Se a URL da database tiver `?v=`, use o ID antes de `?v=`. O valor depois de `?v=` é o ID da view, não da database.

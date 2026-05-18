@@ -108,11 +108,19 @@ Ainda na aba `Configuration`, deixe as capabilities no mínimo necessário para 
 
 Se você quiser usar o extra de SEO automático no futuro, volte aqui e ligue `Update content`, porque esse extra precisa escrever o `SEO Score` de volta no Notion.
 
+Se você fechar essa tela, pode voltar para suas connections por este link:
+
+https://www.notion.so/profile/integrations
+
 ## Liberar acesso à database
 
 Criar a integration não basta. Você também precisa dizer quais páginas ou databases essa integration pode acessar.
 
-Na página da sua connection, abra a aba `Content access`.
+Abra sua connection em:
+
+https://www.notion.so/profile/integrations
+
+Na página da connection, abra a aba `Content access`.
 
 Clique em `Edit access`.
 
@@ -175,6 +183,10 @@ O SEO audit deste template faz uma coisa específica: ele chama o PageSpeed Insi
 Para deixar isso pronto desde o começo, faça três coisas.
 
 Primeiro, volte na sua Notion integration e ligue `Update content`, porque o SEO audit precisa escrever o valor em `SEO Score` na database.
+
+O link para voltar nas suas integrations é:
+
+https://www.notion.so/profile/integrations
 
 Depois, escolha um segredo para proteger a rota de auditoria. Você pode gerar uma senha forte no Bitwarden:
 
@@ -323,7 +335,11 @@ Se você configurou domínio próprio, use o domínio próprio:
 
 https://blog.seudominio.com/api/notion-webhook
 
-Na página da sua connection do Notion, abra a aba `Webhooks`.
+Volte na sua connection do Notion:
+
+https://www.notion.so/profile/integrations
+
+Abra a aba `Webhooks`.
 
 Clique para criar uma nova subscription.
 
@@ -378,6 +394,10 @@ Depois adicione mais uma environment variable na Vercel:
 Faça redeploy.
 
 Depois do redeploy, volte na aba `Webhooks` da sua connection do Notion.
+
+Link das connections:
+
+https://www.notion.so/profile/integrations
 
 Clique em `Verify`.
 
