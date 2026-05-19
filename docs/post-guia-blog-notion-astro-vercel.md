@@ -515,7 +515,7 @@ name: SEO audit
 on:
   workflow_dispatch:
   schedule:
-    - cron: "*/15 * * * *"
+    - cron: "7,22,37,52 * * * *"
 
 jobs:
   audit:
@@ -554,11 +554,23 @@ https://seu-projeto.vercel.app/api/seo-audit
 
 Depois vá na aba `Actions`, abra o workflow `SEO audit` e clique em `Run workflow` para testar.
 
-Depois disso, o GitHub também roda esse workflow automaticamente a cada 15 minutos.
+Depois disso, o GitHub também roda esse workflow automaticamente perto de quatro vezes por hora.
+
+O cron `7,22,37,52 * * * *` significa: rodar nos minutos 7, 22, 37 e 52 de cada hora, em UTC. O GitHub Actions não promete execução no segundo exato. Em horários de muita carga, uma execução agendada pode atrasar ou até ser descartada. Por isso você pode ver horários um pouco irregulares na aba `Actions`.
 
 Na prática, quando você publica um post, o webhook do Notion faz a Vercel rebuildar o blog. Depois que o post já está publicado no site, o workflow de SEO chama `/api/seo-audit`, mede os posts publicados e escreve a nota em `SEO Score` no Notion.
 
 Não é instantâneo no mesmo segundo do publish, porque a página precisa existir publicamente antes da auditoria. Mas, com o workflow ativo, o score deve aparecer no Notion pouco depois da publicação.
+
+Para conferir se rodou depois de publicar:
+
+1. Publique o post no Notion.
+2. Espere o deploy da Vercel terminar.
+3. Volte em `Actions`.
+4. Abra a próxima execução do workflow `SEO audit` que aparecer depois do deploy.
+5. Abra o step `Run SEO audit endpoint`.
+6. Confira se o step terminou verde.
+7. Volte no Notion e veja se `SEO Score` foi atualizado.
 
 O template recalcula os posts publicados quando o workflow roda. Isso evita score antigo depois que você atualiza um post. Para blogs pequenos, esse é o caminho mais simples e confiável.
 
